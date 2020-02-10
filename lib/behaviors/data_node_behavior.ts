@@ -1,8 +1,14 @@
 /*
  * TODO: Cleanup event listeners on dispose.
  */
-import { IConstructor } from '@aperos/ts-goodies'
-import { BaseClass, ClassName, IBaseClass, IBaseClassOpts } from '@aperos/essentials'
+import { IConstructor, IBitFlags } from '@aperos/ts-goodies'
+import {
+  BaseClass,
+  BaseClassFlags,
+  ClassName,
+  IBaseClass,
+  IBaseClassOpts
+} from '@aperos/essentials'
 import { IDataNode } from '../data_node'
 
 export interface IDataNodeBehavior extends IBaseClass {
@@ -15,16 +21,19 @@ export interface IDataNodeBehaviorOpts extends IBaseClassOpts {
   dataPath?: string
 }
 
+export type DataNodeBehaviorFlags = 'IsUpdating' | BaseClassFlags
+
 interface IBehaviorCtor extends IConstructor<IDataNodeBehavior> {
   readonly className?: string
   readonly requiredPaths: Array<string>
   isAssignedTo(dataNode: IDataNode): boolean
 }
 
-const dnMap = new Map<string, WeakSet<IDataNode>>()
-
 @ClassName('DataNodeBehavior')
 export class DataNodeBehavior extends BaseClass implements IDataNodeBehavior {
+  static behaviorMap = new Map<string, WeakMap<IDataNode, IDataNodeBehavior>>()
+
+  readonly flags!: IBitFlags<DataNodeBehaviorFlags>
   readonly dnRoot: IDataNode
   readonly dataNode: IDataNode
 
@@ -38,23 +47,41 @@ export class DataNodeBehavior extends BaseClass implements IDataNodeBehavior {
     this.dataNode = dp ? root.getExistingNode(dp) : root
     this.validate()
     this.prepare()
-    this.initBehavior()
+    this.initBehavior(opts)
   }
 
-  protected initBehavior() {}
+  protected get behaviorMap() {
+    return DataNodeBehavior.behaviorMap
+  }
+
+  protected get isUpdating() {
+    return this.flags.isSet('IsUpdating')
+  }
+
+  protected applyUpdates(update: () => void) {
+    const { flags: f, isUpdating: u } = this
+    if (!u) {
+      f.setFlag('IsUpdating')
+      update()
+      f.unset('IsUpdating')
+    }
+    return this
+  }
+
+  protected initBehavior(_: IDataNodeBehaviorOpts) {}
 
   protected prepare() {
-    const { className, dataNode } = this
+    const { behaviorMap: bm, className, dataNode } = this
     if ((this.constructor as IBehaviorCtor).isAssignedTo(dataNode)) {
       throw new Error(`UI0013: Behavior '${className} already assigned to '${dataNode.fullPath}'`)
     }
     const cn = className
-    let xs = dnMap.get(cn)
+    let xs = bm.get(cn)
     if (!xs) {
-      xs = new WeakSet<IDataNode>()
-      dnMap.set(cn, xs)
+      xs = new WeakMap<IDataNode, IDataNodeBehavior>()
+      bm.set(cn, xs)
     }
-    xs.add(dataNode)
+    xs.set(dataNode, this)
   }
 
   protected validate() {
@@ -72,8 +99,13 @@ export class DataNodeBehavior extends BaseClass implements IDataNodeBehavior {
     return []
   }
 
+  static findBehavior(name: string, dataNode: IDataNode) {
+    const xs = this.behaviorMap.get(name)
+    return xs ? xs.get(dataNode) : undefined
+  }
+
   static isAssignedTo(dataNode: IDataNode) {
-    const xs = dnMap.get((this as IBehaviorCtor).className!)
+    const xs = this.behaviorMap.get((this as IBehaviorCtor).className!)
     return xs && xs.has(dataNode)
   }
 }
