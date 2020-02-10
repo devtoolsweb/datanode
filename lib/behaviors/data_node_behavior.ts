@@ -1,8 +1,9 @@
 /*
  * TODO: Cleanup event listeners on dispose.
  */
+import { IConstructor } from '@aperos/ts-goodies'
 import { BaseClass, ClassName, IBaseClass, IBaseClassOpts } from '@aperos/essentials'
-import { IDataNode } from '@aperos/datanode'
+import { IDataNode } from '../data_node'
 
 export interface IDataNodeBehavior extends IBaseClass {
   readonly dnRoot: IDataNode
@@ -14,9 +15,8 @@ export interface IDataNodeBehaviorOpts extends IBaseClassOpts {
   dataPath?: string
 }
 
-interface IBehaviorCtor {
-  new (opts: IDataNodeBehaviorOpts): IDataNodeBehavior
-  readonly className: string
+interface IBehaviorCtor extends IConstructor<IDataNodeBehavior> {
+  readonly className?: string
   readonly requiredPaths: Array<string>
   isAssignedTo(dataNode: IDataNode): boolean
 }
@@ -31,7 +31,7 @@ export class DataNodeBehavior extends BaseClass implements IDataNodeBehavior {
   constructor(opts: IDataNodeBehaviorOpts) {
     super(opts)
     if (!this.className) {
-      throw new Error('UI0012: Data model behavior must have an explicit class name')
+      throw new Error('UI0012: Data node behavior must have an explicit class name')
     }
     const { dataNode: root, dataPath: dp } = opts
     this.dnRoot = root
@@ -73,7 +73,7 @@ export class DataNodeBehavior extends BaseClass implements IDataNodeBehavior {
   }
 
   static isAssignedTo(dataNode: IDataNode) {
-    const xs = dnMap.get(((this as unknown) as IBehaviorCtor).className)
+    const xs = dnMap.get((this as IBehaviorCtor).className!)
     return xs && xs.has(dataNode)
   }
 }

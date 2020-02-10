@@ -1,6 +1,6 @@
 import { ClassName } from '@aperos/essentials'
-import { DataNode, IDataNode, IDataNodeEvent } from './data_node'
-import { DataNodeLink } from './data_node_link'
+import { DataNode, IDataNode, IDataNodeEvent } from '../data_node'
+import { DataNodeLink } from '../data_node_link'
 import { DataNodeBehavior, IDataNodeBehavior, IDataNodeBehaviorOpts } from './data_node_behavior'
 
 export interface IItemContainerBehavior extends IDataNodeBehavior {}
