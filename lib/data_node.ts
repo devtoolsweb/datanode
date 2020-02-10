@@ -177,7 +177,7 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
 
   addSuccessorNode(path: string, node: IDataNode): this {
     if (path.trimLeft().charAt(0) === DataNode.pathSeparator) {
-      throw new Error(`Path for successor of data node must be relative: "${path}"`)
+      throw new Error(`DN0001: Path for successor of data node must be relative: "${path}"`)
     }
     this.makePath(path)!.addChild(node)
     return this
@@ -218,7 +218,9 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
     } else {
       const d = new Date(this.getInt())
       if (isNaN(d.getTime())) {
-        throw new Error(`The data node '${this.fullPath}' does not contain a value of type Date`)
+        throw new Error(
+          `DN0002: The data node '${this.fullPath}' does not contain a value of type Date`
+        )
       }
       return d
     }
@@ -227,7 +229,7 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
   getExistingNode(path: string) {
     const dn = this.getNodeByPath(path)
     if (!dn) {
-      throw new Error(`Data node '${this.fullPath}' has no child in the path '${path}'`)
+      throw new Error(`DN0003: Data node '${this.fullPath}' has no child in the path '${path}'`)
     }
     return dn
   }
@@ -237,13 +239,15 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
     if (typeof v === 'number') {
       return v
     } else if (v === null) {
-      throw new Error('Cannot convert null to number')
+      throw new Error('DN0004: Cannot convert null to number')
     } else if (v instanceof Date) {
       return v.getTime()
     } else {
       const n = parseFloat(v as string)
       if (isNaN(n)) {
-        throw new Error(`The data node '${this.fullPath}' does not contain a value of type Number`)
+        throw new Error(
+          `DN0005: The data node '${this.fullPath}' does not contain a value of type Number`
+        )
       }
       return n
     }
@@ -264,7 +268,7 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
   getRelativePath(node: IDataNode, target: IDataNode): string {
     if (node.root !== target.root) {
       throw new Error(
-        `Date nodes must belong to one tree: '${node.fullPath}', '${target.fullPath}'`
+        `DN0006: Date nodes must belong to one tree: '${node.fullPath}', '${target.fullPath}'`
       )
     }
     throw new Error('Not implemented')
@@ -273,7 +277,7 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
   getString(): string {
     const d = this.$value
     if (d === null) {
-      throw new Error('Cannot convert null to string')
+      throw new Error('DN0007: Cannot convert null to string')
     } else {
       return d.toString()
     }
@@ -295,7 +299,9 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
         if (createNode) {
           const newNode = createNode(name, pathParts)
           if (!newNode) {
-            throw new Error(`Data node builder returns null: ${pp.join(DataNode.pathSeparator)}`)
+            throw new Error(
+              `DN0008: Data node builder returns null: ${pp.join(DataNode.pathSeparator)}`
+            )
           }
           return newNode
         } else {
@@ -360,7 +366,7 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
    */
   walkPath(path: string, visit: DataNodeVisitor): IDataNode | null {
     if (path.charAt(0) === ' ' || path.charAt(path.length - 1) === ' ') {
-      throw new Error(`Path to data node must not be enclosed in spaces: "${path}"`)
+      throw new Error(`DN0009: Path to data node must not be enclosed in spaces: "${path}"`)
     }
     let node: IDataNode | null = this
     if (path.length > 0) {
@@ -370,7 +376,7 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
         const name = p[i]
         if (name === '') {
           if (i > 0) {
-            throw new Error(`Data element path cannot end with "/": "${path}"`)
+            throw new Error(`DN0010: Data element path cannot end with "/": "${path}"`)
           }
           fp.length = 0
           node = visit(this.root as IDataNode, fp)
@@ -378,7 +384,7 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
           node = visit(node, fp)
         } else if (name === '..') {
           if (!node.parent) {
-            throw new Error(`Invalid data node path: "${path}"`)
+            throw new Error(`DN0011: Invalid data node path: "${path}"`)
           }
           fp.pop()
           node = visit(node.parent, fp)
@@ -419,7 +425,7 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
 
   static verifyName(name?: string): string {
     if (!name || !DataNode.nodeNameRegexp.test(name)) {
-      throw new Error(`Invalid name for data node: "${name}"`)
+      throw new Error(`DN0012: Invalid name for data node: "${name}"`)
     }
     return name
   }

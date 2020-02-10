@@ -25,7 +25,7 @@ export class DataNodeLink extends DataNode implements IDataNodeLink {
     if (path) {
       t = t.getNodeByPath(path)
       if (!t) {
-        throw new Error(`Target node has no child in path '${path}'`)
+        throw new Error(`DN0013: Target node has no child in path '${path}'`)
       }
     }
     super({ ...p, name: p.name || t.name })

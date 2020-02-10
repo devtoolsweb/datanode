@@ -89,10 +89,10 @@ export class DataNodeBuilder implements IDataNodeBuilder {
     const xs = this.identifiedNodes
     if (name === '@id') {
       if (xs.has(value)) {
-        throw new Error(`Node already has an id: ${value}`)
+        throw new Error(`DN0014: Node already has an id: ${value}`)
       }
       if (value.charAt(0) !== '#') {
-        throw new Error(`Node id must begin with '#': ${value}`)
+        throw new Error(`DN0015: Node id must begin with '#': ${value}`)
       }
       xs.set(value, dn)
       return true
@@ -108,7 +108,7 @@ export class DataNodeBuilder implements IDataNodeBuilder {
     if (t === 'boolean' || t === 'number' || t === 'string') {
       dn.value = value
     } else {
-      throw new Error(`Unknown data node value type: ${t}`)
+      throw new Error(`DN0016: Unknown data node value type: ${t}`)
     }
   }
 
@@ -117,7 +117,7 @@ export class DataNodeBuilder implements IDataNodeBuilder {
     if (m) {
       const timestamp = new Date(m[1])
       if (isNaN(timestamp.valueOf())) {
-        throw new Error(`Invalid date string: ${m[1]}`)
+        throw new Error(`DN0017: Invalid date string: ${m[1]}`)
       }
       new DataNode({ name, value: new Date(timestamp) })
     }
@@ -130,7 +130,7 @@ export class DataNodeBuilder implements IDataNodeBuilder {
       const path = m[1]
       const target = dn.getNodeByPath(path)
       if (!target) {
-        throw new Error(`Target node does not exist: '${path}`)
+        throw new Error(`DN0018: Target node does not exist: '${path}`)
       }
       return new DataNodeLink({ name, target })
     }
@@ -143,12 +143,14 @@ export class DataNodeBuilder implements IDataNodeBuilder {
       const [, id, path] = m
       let target = this.identifiedNodes.get(id)
       if (!target) {
-        throw new Error(`Node with id '${id}' does not exist`)
+        throw new Error(`DN0019: Node with id '${id}' does not exist`)
       }
       if (path) {
         const c = target.getNodeByPath(path)
         if (!c) {
-          throw new Error(`Child node '${path}' of node '${target.fullPath}' does not exist`)
+          throw new Error(
+            `DN0020: Child node '${path}' of node '${target.fullPath}' does not exist`
+          )
         }
         target = c
       }

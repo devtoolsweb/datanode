@@ -40,7 +40,7 @@ export class DataNodeBehavior extends BaseClass implements IDataNodeBehavior {
   constructor(opts: IDataNodeBehaviorOpts) {
     super(opts)
     if (!this.className) {
-      throw new Error('UI0012: Data node behavior must have an explicit class name')
+      throw new Error('DN0021: Data node behavior must have an explicit class name')
     }
     const { dataNode: root, dataPath: dp } = opts
     this.dnRoot = root
@@ -73,7 +73,7 @@ export class DataNodeBehavior extends BaseClass implements IDataNodeBehavior {
   protected prepare() {
     const { behaviorMap: bm, className, dataNode } = this
     if ((this.constructor as IBehaviorCtor).isAssignedTo(dataNode)) {
-      throw new Error(`UI0013: Behavior '${className} already assigned to '${dataNode.fullPath}'`)
+      throw new Error(`DN0022: Behavior '${className} already assigned to '${dataNode.fullPath}'`)
     }
     const cn = className
     let xs = bm.get(cn)
@@ -90,7 +90,7 @@ export class DataNodeBehavior extends BaseClass implements IDataNodeBehavior {
     const dn = this.dataNode
     for (const path of paths) {
       if (!dn.getNodeByPath(path)) {
-        throw new Error(`UI0015: Data node '${dn.fullPath}' has no child '${path}'`)
+        throw new Error(`DN0023: Data node '${dn.fullPath}' has no child '${path}'`)
       }
     }
   }
