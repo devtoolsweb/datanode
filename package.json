@@ -1,0 +1,32 @@
+{
+  "author": "<aperos.dev@gmail.com>",
+  "dependencies": {
+    "@aperos/essentials": "*",
+    "@aperos/event-emitter": "*",
+    "@aperos/ts-goodies": "*"
+  },
+  "description": "The data node allows you to build convenient hierarchical structures with tracking of change events",
+  "devDependencies": {
+    "@types/jest": "latest",
+    "jest": "latest",
+    "rollup": "latest",
+    "rollup-plugin-dts": "latest",
+    "rollup-plugin-terser": "latest",
+    "rollup-plugin-typescript2": "latest",
+    "ts-jest": "latest",
+    "ts-node": "latest",
+    "typescript": "latest"
+  },
+  "license": "MIT",
+  "name": "@aperos/datanode",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rollup -c",
+    "build-production": "BUILD=production npm run build",
+    "clean": "rm -rf build dist",
+    "prepare": "npm run clean && npm run build-production",
+    "test": "jest"
+  },
+  "types": "dist/index.d.ts",
+  "version": "0.0.1"
+}
