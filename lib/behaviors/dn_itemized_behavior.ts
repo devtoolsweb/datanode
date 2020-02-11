@@ -1,7 +1,6 @@
 import { IBitFlags } from '@aperos/ts-goodies'
 import { ClassName } from '@aperos/essentials'
 import { IDataNode, IDataNodeEvent } from '../data_node'
-import { IDataNodeLink } from '../data_node_link'
 import {
   DataNodeBehavior,
   DataNodeBehaviorFlags,
@@ -14,11 +13,13 @@ export interface IDnItemizedBehavior extends IDataNodeBehavior {
   readonly dnIndex: IDataNode
   readonly dnItems: IDataNode
   readonly roundRobin: boolean
+  unselectAll(): this
 }
 
 export interface IDnItemizedBehaviorOpts extends IDataNodeBehaviorOpts {
   allowMultiselect?: boolean
   roundRobin?: boolean
+  index?: number
 }
 
 export type DnItemizedBehaviorFlags = 'AllowMultiselect' | 'RoundRobin' | DataNodeBehaviorFlags
@@ -49,6 +50,15 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     return this.flags.isSet('RoundRobin')
   }
 
+  unselectAll() {
+    const { selectedItems: xs, selectionsMap: sm } = this
+    xs.forEach(x => {
+      const s = sm.get(x)!
+      s.value = false
+    })
+    return this
+  }
+
   protected readonly selectionChangeListener = (event: IDataNodeEvent) => {
     const s = event.node
     const p = s.parent!
@@ -60,21 +70,6 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
       }
     })
   }
-
-  protected selectItem(item: IDataNode) {
-    const { selectedItems: xs, selectionsMap: sm } = this
-    xs.add(item)
-    if (!this.allowMultiselect) {
-      xs.forEach(x => {
-        if (x !== item) {
-          const s = sm.get(x)!
-          s.value = false
-        }
-      })
-    }
-  }
-
-  protected unselectItem(item: IDataNode) {}
 
   protected initBehavior(opts: IDnItemizedBehaviorOpts) {
     const { dataNode: dn, dnIndex, dnItems, flags, essentials: xs, selectionsMap: sm } = this
@@ -88,10 +83,12 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
       dnIndex.enumChildren(c => {
         this.initItem(c)
       })
+      const i = opts.index
+      this.applyIndex(i === undefined ? -1 : i)
     })
 
     dnIndex.on('change', () => {
-      this.updateIndex(dnIndex.getInt())
+      this.applyIndex(dnIndex.getInt())
     })
 
     dnItems
@@ -106,7 +103,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
         const s = sm.get(c)!
         sm.delete(c)
         if (c.parent === dnItems && s.value) {
-          this.updateIndex(dnItems.childCount > 0 ? Math.max(0, c.childIndex - 1) : -1)
+          this.applyIndex(dnItems.childCount > 0 ? Math.max(0, c.childIndex - 1) : -1)
         }
         s.off('change', this.selectionChangeListener)
       })
@@ -122,7 +119,59 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     s.on('change', this.selectionChangeListener)
   }
 
-  protected updateIndex(index: number) {}
+  protected selectItem(item: IDataNode) {
+    const { selectedItems: xs, selectionsMap: sm } = this
+    xs.add(item)
+    if (!this.allowMultiselect) {
+      xs.forEach(x => {
+        if (x !== item) {
+          const s = sm.get(x)!
+          s.value = false
+        }
+      })
+    }
+    this.setFirstSelectedIndex()
+  }
+
+  protected setFirstSelectedIndex() {
+    const { dnIndex, dnItems, selectionsMap: sm } = this
+    let index = -1
+    dnItems.enumChildren((c, i) => {
+      const s = sm.get(c)!
+      if (s.value) {
+        index = i!
+        return 'Leave'
+      }
+      return
+    })
+    if (index !== dnIndex.value) {
+      dnIndex.value = index
+    }
+  }
+
+  protected unselectItem(item: IDataNode) {
+    const { selectedItems: xs } = this
+    xs.delete(item)
+    this.setFirstSelectedIndex()
+  }
+
+  protected applyIndex(index: number) {
+    const { allowMultiselect: ms, dnIndex, dnItems, roundRobin: rr, selectionsMap: sm } = this
+    const n = rr ? index % dnItems.childCount : index
+    dnIndex.value = n
+    if (index < 0) {
+      this.unselectAll()
+    } else {
+      dnItems.enumChildren((c, i) => {
+        const s = sm.get(c)!
+        s.value = n === i
+        if (!ms) {
+          return 'Leave'
+        }
+        return
+      })
+    }
+  }
 
   private get selectionsMap() {
     return DnItemizedBehavior.selectionsMap
