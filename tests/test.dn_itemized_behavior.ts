@@ -28,6 +28,7 @@ test('create', () => {
   expect(b.roundRobin).toBeFalsy()
   expect(b.selectedCount).toBe(0)
   expect(countSelected(list)).toBe(0)
+  expect(getf(list, 'index').value).toBe(-1)
   expect(() => new DnItemizedBehavior({ dataNode: list })).toThrowError()
 })
 

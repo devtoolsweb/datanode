@@ -138,7 +138,8 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
         this.initItem(c)
       })
       const i = opts.index
-      this.applyIndex(i === undefined ? dnIndex.getInt() : i)
+      const v = dnIndex.value
+      this.applyIndex(i === undefined ? (typeof v === 'number' ? v : -1) : i)
     })
 
     dnIndex.on('change', () => {
