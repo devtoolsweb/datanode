@@ -33,7 +33,7 @@ export class ItemContainerBehavior extends DataNodeBehavior implements IItemCont
       this.updateIndex(index)
     }
 
-    this.applyUpdates(() => {
+    this.performUpdates(() => {
       dnItems.enumChildren((c, i) => {
         const s = this.getSelection(c)!
         if (!selectionsMap.has(c)) {
@@ -89,7 +89,7 @@ export class ItemContainerBehavior extends DataNodeBehavior implements IItemCont
   }
 
   protected updateIndex(i: number) {
-    this.applyUpdates(() => {
+    this.performUpdates(() => {
       if (!this.dnItems.childCount) {
         this.prevIndex = -1
         return

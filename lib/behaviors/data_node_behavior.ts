@@ -58,7 +58,7 @@ export class DataNodeBehavior extends BaseClass implements IDataNodeBehavior {
     return this.flags.isSet('IsUpdating')
   }
 
-  protected applyUpdates(update: () => void) {
+  protected performUpdates(update: () => void) {
     const { flags: f, isUpdating: u } = this
     if (!u) {
       f.setFlag('IsUpdating')
@@ -71,17 +71,16 @@ export class DataNodeBehavior extends BaseClass implements IDataNodeBehavior {
   protected initBehavior(_: IDataNodeBehaviorOpts) {}
 
   protected prepare() {
-    const { behaviorMap: bm, className, dataNode } = this
-    if ((this.constructor as IBehaviorCtor).isAssignedTo(dataNode)) {
-      throw new Error(`DN0022: Behavior '${className} already assigned to '${dataNode.fullPath}'`)
+    const { behaviorMap: bm, className: cn, dataNode: dn } = this
+    if ((this.constructor as IBehaviorCtor).isAssignedTo(dn)) {
+      throw new Error(`DN0022: Behavior '${cn}' already assigned to '${dn.fullPath}'`)
     }
-    const cn = className
     let xs = bm.get(cn)
     if (!xs) {
       xs = new WeakMap<IDataNode, IDataNodeBehavior>()
       bm.set(cn, xs)
     }
-    xs.set(dataNode, this)
+    xs.set(dn, this)
   }
 
   protected validate() {

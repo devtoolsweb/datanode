@@ -48,7 +48,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
   protected readonly selectionChangeListener = (event: IDataNodeEvent) => {
     const s = event.node
     const p = s.parent!
-    this.applyUpdates(() => {
+    this.performUpdates(() => {
       if (s.value) {
         this.selectItem(p)
       } else {
@@ -69,7 +69,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     xs.dnIndex = dn.makePath('index')!
     xs.dnItems = dn.makePath('items')!
 
-    this.applyUpdates(() => {
+    this.performUpdates(() => {
       dnIndex.enumChildren(c => {
         this.initItem(c)
       })
