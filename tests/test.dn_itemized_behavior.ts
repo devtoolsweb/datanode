@@ -28,6 +28,7 @@ test('create', () => {
   expect(b.roundRobin).toBeFalsy()
   expect(b.selectedCount).toBe(0)
   expect(countSelected(list)).toBe(0)
+  expect(() => new DnItemizedBehavior({ dataNode: list })).toThrowError()
 })
 
 test('apply behavior', () => {
@@ -95,5 +96,49 @@ test('multi select', () => {
   }
   expect(dnIndex.value).toBe(-1)
   expect(countSelected(list)).toBe(0)
-  console.log(list.toString())
+})
+
+test('remove item', () => {
+  const list = createList()
+  new DnItemizedBehavior({ dataNode: list })
+  const dnIndex = getf(list, 'index')
+  const dnItems = getf(list, 'items')
+  ;[9, 5, 0].forEach(i => {
+    dnIndex.value = i
+    dnItems.removeChild(dnItems.getChildAt(i)!)
+    expect(dnIndex.value).toBe(-1)
+  })
+})
+
+test('remove item: keep selection', () => {
+  const list = createList()
+  new DnItemizedBehavior({ dataNode: list, keepSelection: true })
+  const dnIndex = getf(list, 'index')
+  const dnItems = getf(list, 'items')
+  ;[9, 5, 0].forEach(i => {
+    dnIndex.value = i
+    dnItems.removeChild(dnItems.getChildAt(i)!)
+    expect(dnIndex.value).toBe(Math.max(0, i - 1))
+    expect(countSelected(list)).toBe(1)
+  })
+  while (dnItems.childCount > 1) {
+    dnItems.removeChild(dnItems.firstChild!)
+    expect(dnIndex.value).toBe(0)
+  }
+  dnItems.removeChild(dnItems.firstChild!)
+  expect(dnIndex.value).toBe(-1)
+})
+
+test('remove item: multiple selections', () => {
+  const list = createList()
+  new DnItemizedBehavior({ allowMultiSelect: true, dataNode: list })
+  const dnIndex = getf(list, 'index')
+  const dnItems = getf(list, 'items')
+  dnIndex.value = 5
+  while (dnItems.childCount > 5) {
+    dnItems.removeChild(dnItems.firstChild!)
+  }
+  expect(dnIndex.value).toBe(0)
+  dnItems.removeChild(dnItems.firstChild!)
+  expect(dnIndex.value).toBe(-1)
 })

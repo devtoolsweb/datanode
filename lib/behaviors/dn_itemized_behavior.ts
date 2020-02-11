@@ -20,11 +20,16 @@ export interface IDnItemizedBehavior extends IDataNodeBehavior {
 
 export interface IDnItemizedBehaviorOpts extends IDataNodeBehaviorOpts {
   allowMultiSelect?: boolean
+  keepSelection?: boolean
   roundRobin?: boolean
   index?: number
 }
 
-export type DnItemizedBehaviorFlags = 'AllowMultiSelect' | 'RoundRobin' | DataNodeBehaviorFlags
+export type DnItemizedBehaviorFlags =
+  | 'AllowMultiSelect'
+  | 'KeepSelection'
+  | 'RoundRobin'
+  | DataNodeBehaviorFlags
 
 type EssentialChildren = 'dnIndex' | 'dnItems'
 
@@ -74,6 +79,10 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     return {} as Partial<Record<EssentialChildren, IDataNode>>
   }
 
+  protected get keepSelection() {
+    return this.flags.isSet('KeepSelection')
+  }
+
   @Memoize()
   protected get selectionChangeListener() {
     return (event: IDataNodeEvent) => {
@@ -94,13 +103,34 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     return new Set<IDataNode>()
   }
 
+  protected findFirstSelectedIndex() {
+    const { dnItems, selectionsMap: sm } = this
+    let index = -1
+    dnItems.enumChildren((c, i) => {
+      const s = sm.get(c)!
+      if (s.value) {
+        index = i!
+        return 'Leave'
+      }
+      return
+    })
+    return index
+  }
+
   protected initBehavior(opts: IDnItemizedBehaviorOpts) {
+    if (opts.allowMultiSelect && opts.keepSelection) {
+      throw new Error(
+        `DN0024: Parameters 'allowMultiSelect' and 'keepSelection' can't be used simultaneously`
+      )
+    }
+
     const { dataNode: dn, essentials: cn } = this
     cn.dnIndex = dn.makePath('index')!
     cn.dnItems = dn.makePath('items')!
 
     const { dnIndex, dnItems, flags, selectionsMap: sm } = this
     flags.setFlagValue('AllowMultiSelect', !!opts.allowMultiSelect)
+    flags.setFlagValue('KeepSelection', !!opts.keepSelection)
     flags.setFlagValue('RoundRobin', !!opts.roundRobin)
 
     this.performUpdates(() => {
@@ -112,7 +142,9 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     })
 
     dnIndex.on('change', () => {
-      this.applyIndex(dnIndex.getInt())
+      if (!this.isUpdating) {
+        this.applyIndex(dnIndex.getInt())
+      }
     })
 
     dnItems
@@ -123,13 +155,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
         s.on('change', this.selectionChangeListener)
       })
       .on('removeChild', event => {
-        const c = event.child!
-        const s = sm.get(c)!
-        sm.delete(c)
-        if (c.parent === dnItems && s.value) {
-          this.applyIndex(dnItems.childCount > 0 ? Math.max(0, c.childIndex - 1) : -1)
-        }
-        s.off('change', this.selectionChangeListener)
+        this.performUpdates(() => this.releaseItem(event.child!))
       })
   }
 
@@ -143,40 +169,73 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     s.on('change', this.selectionChangeListener)
   }
 
-  protected selectItem(item: IDataNode) {
-    const { selectedItems: xs, selectionsMap: sm } = this
-    xs.add(item)
-    if (!this.allowMultiSelect) {
-      xs.forEach(x => {
-        if (x !== item) {
-          const s = sm.get(x)!
-          s.value = false
-        }
-      })
+  protected releaseItem(item: IDataNode) {
+    const { dnIndex, dnItems, selectionsMap: sm } = this
+    const s = sm.get(item)!
+    s.off('change', this.selectionChangeListener)
+
+    const i = dnIndex.getInt()
+    const n = dnItems.childCount
+    const ci = item.childIndex
+    let index = i
+    this.unselectItem(item, true)
+    this.selectedItems.delete(item)
+    const f = this.findFirstSelectedIndex()
+    if (this.allowMultiSelect) {
+      if (f > ci) {
+        index = i === n ? -1 : f - 1
+      } else if (f < 0) {
+        index = -1
+      }
+    } else if (this.keepSelection) {
+      if (n > 1) {
+        index = Math.max(0, i - 1)
+        const next = index < n - 1 ? index : index - 1
+        this.selectItem(dnItems.getChildAt(next === 0 ? 1 : next)!, true)
+      } else {
+        index = -1
+      }
+    } else {
+      index = -1
     }
-    this.setFirstSelectedIndex()
+    if (index !== i) {
+      dnIndex.value = index
+    }
+    sm.delete(item)
+  }
+
+  protected selectItem(item: IDataNode, standalone = false) {
+    const { selectedItems: xs, selectionsMap: sm } = this
+    sm.get(item)!.value = true
+    xs.add(item)
+    if (!standalone) {
+      if (!this.allowMultiSelect) {
+        xs.forEach(x => {
+          if (x !== item) {
+            const s = sm.get(x)!
+            s.value = false
+          }
+        })
+      }
+      this.setFirstSelectedIndex()
+    }
   }
 
   protected setFirstSelectedIndex() {
-    const { dnIndex, dnItems, selectionsMap: sm } = this
-    let index = -1
-    dnItems.enumChildren((c, i) => {
-      const s = sm.get(c)!
-      if (s.value) {
-        index = i!
-        return 'Leave'
-      }
-      return
-    })
+    const { dnIndex } = this
+    const index = this.findFirstSelectedIndex()
     if (index !== dnIndex.value) {
       dnIndex.value = index
     }
   }
 
-  protected unselectItem(item: IDataNode) {
-    const { selectedItems: xs } = this
+  protected unselectItem(item: IDataNode, standalone = false) {
+    const { selectedItems: xs, selectionsMap: sm } = this
+    sm.get(item)!.value = false
     xs.delete(item)
-    this.setFirstSelectedIndex()
+    if (!standalone) {
+      this.setFirstSelectedIndex()
+    }
   }
 
   protected applyIndex(index: number) {
