@@ -19,4 +19,15 @@ test('create', () => {
 test('childIndex', () => {
   const root = new DataNode({ name: 'root' })
   const list = root.makePath('list')
+  for (let i = 0; i < 10; i++) {
+    list.makePath(`item ${i}`)
+  }
+  const links = root.makePath('links')
+  ;[1, 3, 5].forEach(k => {
+    const target = list.getChildAt(k)!
+    links.addChild(new DataNodeLink({ name: `linked item ${k}`, target }))
+  })
+  links.enumChildren((c, i) => {
+    expect(c.childIndex).toBe(i)
+  })
 })
