@@ -1,6 +1,7 @@
 import { IBitFlags, Memoize } from '@aperos/ts-goodies'
 import { ClassName } from '@aperos/essentials'
-import { IDataNode, IDataNodeEvent } from '../data_node'
+import { IDataNode, IDataNodeEvent, DataNode } from '../data_node'
+import { DataNodeLink } from '../data_node_link'
 import {
   DataNodeBehavior,
   DataNodeBehaviorFlags,
@@ -66,9 +67,9 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
   }
 
   unselectAll() {
-    const { selectedItems: xs, selectionsMap: sm } = this
+    const { selectedItems: xs } = this
     xs.forEach(x => {
-      const s = sm.get(x)!
+      const s = this.getSelection(x)
       s.value = false
     })
     return this
@@ -104,10 +105,10 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
   }
 
   protected findFirstSelectedIndex() {
-    const { dnItems, selectionsMap: sm } = this
+    const { dnItems } = this
     let index = -1
     dnItems.enumChildren((c, i) => {
-      const s = sm.get(c)!
+      const s = this.getSelection(c)
       if (s.value) {
         index = i!
         return 'Leave'
@@ -115,6 +116,12 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
       return
     })
     return index
+  }
+
+  protected getSelection(x: number | IDataNode) {
+    const { dnItems, selectionsMap: sm } = this
+    const c = x instanceof DataNode ? x : dnItems.getChildAt(x as number)!
+    return sm.get(c && (c.isLink ? (c as DataNodeLink).target : c))!
   }
 
   protected initBehavior(opts: IDnItemizedBehaviorOpts) {
@@ -128,7 +135,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     cn.dnIndex = dn.makePath('index')!
     cn.dnItems = dn.makePath('items')!
 
-    const { dnIndex, dnItems, flags, selectionsMap: sm } = this
+    const { dnIndex, dnItems, flags } = this
     flags.setFlagValue('AllowMultiSelect', !!opts.allowMultiSelect)
     flags.setFlagValue('KeepSelection', !!opts.keepSelection)
     flags.setFlagValue('RoundRobin', !!opts.roundRobin)
@@ -152,7 +159,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
       .on('addChild', event => {
         const c = event.child!
         this.initItem(c)
-        const s = sm.get(c)!
+        const s = this.getSelection(c)
         s.on('change', this.selectionChangeListener)
       })
       .on('removeChild', event => {
@@ -161,10 +168,11 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
   }
 
   protected initItem(item: IDataNode, selected = false) {
+    const dn = item.isLink ? (item as DataNodeLink).target : item
     const { selectionsMap: sm } = this
-    const s = item.makePath('selected')!
-    if (!sm.has(item)) {
-      sm.set(item, s)
+    const s = dn.makePath('selected')!
+    if (!sm.has(dn)) {
+      sm.set(dn, s)
     }
     s.value = selected
     s.on('change', this.selectionChangeListener)
@@ -172,7 +180,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
 
   protected releaseItem(item: IDataNode) {
     const { dnIndex, dnItems, selectionsMap: sm } = this
-    const s = sm.get(item)!
+    const s = this.getSelection(item)
     s.off('change', this.selectionChangeListener)
 
     const i = dnIndex.getInt()
@@ -206,14 +214,14 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
   }
 
   protected selectItem(item: IDataNode, standalone = false) {
-    const { selectedItems: xs, selectionsMap: sm } = this
-    sm.get(item)!.value = true
+    const { selectedItems: xs } = this
+    this.getSelection(item).value = true
     xs.add(item)
     if (!standalone) {
       if (!this.allowMultiSelect) {
         xs.forEach(x => {
           if (x !== item) {
-            const s = sm.get(x)!
+            const s = this.getSelection(x)
             s.value = false
           }
         })
@@ -231,8 +239,8 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
   }
 
   protected unselectItem(item: IDataNode, standalone = false) {
-    const { selectedItems: xs, selectionsMap: sm } = this
-    sm.get(item)!.value = false
+    const { selectedItems: xs } = this
+    this.getSelection(item).value = false
     xs.delete(item)
     if (!standalone) {
       this.setFirstSelectedIndex()
@@ -240,14 +248,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
   }
 
   protected applyIndex(index: number) {
-    const {
-      allowMultiSelect: ms,
-      dnIndex,
-      dnItems,
-      roundRobin: rr,
-      selectedItems: xs,
-      selectionsMap: sm
-    } = this
+    const { allowMultiSelect: ms, dnIndex, dnItems, roundRobin: rr, selectedItems: xs } = this
     const n = rr ? index % dnItems.childCount : index
     dnIndex.value = n
     if (n < 0) {
@@ -255,7 +256,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     } else {
       let dn: IDataNode | null = null
       dnItems.enumChildren((c, i = 0) => {
-        const s = sm.get(c)!
+        const s = this.getSelection(c)
         if (i >= n) {
           dn = c
           s.value = true
@@ -268,7 +269,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
       if (!ms) {
         xs.forEach(x => {
           if (x !== dn) {
-            const s = sm.get(x)!
+            const s = this.getSelection(x)
             s.value = false
           }
         })
