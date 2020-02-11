@@ -25,7 +25,7 @@ export class DataNodeLink extends DataNode implements IDataNodeLink {
     if (path) {
       t = t.getNodeByPath(path)
       if (!t) {
-        throw new Error(`Target node has no child in path '${path}'`)
+        throw new Error(`DN0013: Target node has no child in path '${path}'`)
       }
     }
     super({ ...p, name: p.name || t.name })
@@ -115,7 +115,7 @@ export class DataNodeLink extends DataNode implements IDataNodeLink {
     return this.target.listeners(event)
   }
 
-  makePath(path: string, createNode?: DataNodeCreator): IDataNode | null {
+  makePath(path: string, createNode?: DataNodeCreator) {
     return this.target.makePath(path, createNode)
   }
 

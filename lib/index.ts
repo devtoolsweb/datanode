@@ -1,5 +1,5 @@
+// Last error: DN0024
 export * from './data_node'
-export * from './data_node_behavior'
 export * from './data_node_builder'
 export * from './data_node_link'
-export * from './item_container_behavior'
+export * from './behaviors'

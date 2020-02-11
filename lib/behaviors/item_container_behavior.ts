@@ -1,6 +1,6 @@
 import { ClassName } from '@aperos/essentials'
-import { DataNode, IDataNode, IDataNodeEvent } from './data_node'
-import { DataNodeLink } from './data_node_link'
+import { DataNode, IDataNode, IDataNodeEvent } from '../data_node'
+import { DataNodeLink } from '../data_node_link'
 import { DataNodeBehavior, IDataNodeBehavior, IDataNodeBehaviorOpts } from './data_node_behavior'
 
 export interface IItemContainerBehavior extends IDataNodeBehavior {}
@@ -12,11 +12,8 @@ const selectionsMap = new WeakMap<IDataNode, IDataNode>()
 @ClassName('ItemContainerBehavior')
 export class ItemContainerBehavior extends DataNodeBehavior implements IItemContainerBehavior {
   protected prevIndex!: number
-  protected isUpdatingIndex!: boolean
 
   initBehavior() {
-    super.initBehavior()
-
     const { dnIndex, dnItems } = this
     const index = dnIndex.getInt()
     this.prevIndex = index
@@ -36,18 +33,18 @@ export class ItemContainerBehavior extends DataNodeBehavior implements IItemCont
       this.updateIndex(index)
     }
 
-    this.isUpdatingIndex = true
-    dnItems.enumChildren((c, i) => {
-      const s = this.getSelection(c)!
-      if (!selectionsMap.has(c)) {
-        selectionsMap.set(c, s)
-      }
-      s.on('change', selectionChangeListener)
-      if (!s.isLink) {
-        s.value = index === i
-      }
+    this.performUpdates(() => {
+      dnItems.enumChildren((c, i) => {
+        const s = this.getSelection(c)!
+        if (!selectionsMap.has(c)) {
+          selectionsMap.set(c, s)
+        }
+        s.on('change', selectionChangeListener)
+        if (!s.isLink) {
+          s.value = index === i
+        }
+      })
     })
-    this.isUpdatingIndex = false
 
     dnIndex.on('change', () => {
       this.updateIndex(dnIndex.getInt())
@@ -92,32 +89,29 @@ export class ItemContainerBehavior extends DataNodeBehavior implements IItemCont
   }
 
   protected updateIndex(i: number) {
-    if (this.isUpdatingIndex) {
-      return
-    }
-    this.isUpdatingIndex = true
-    if (!this.dnItems.childCount) {
-      this.prevIndex = -1
-      return
-    }
-    const p = this.prevIndex
-    if (i !== p) {
-      this.dnIndex.value = i
-      if (p >= 0) {
-        const s = this.getSelection(p)
-        /* WARNING: Don't change this behavior */
-        if (s && s.value !== false) {
-          s.value = false
+    this.performUpdates(() => {
+      if (!this.dnItems.childCount) {
+        this.prevIndex = -1
+        return
+      }
+      const p = this.prevIndex
+      if (i !== p) {
+        this.dnIndex.value = i
+        if (p >= 0) {
+          const s = this.getSelection(p)
+          /* WARNING: Don't change this behavior */
+          if (s && s.value !== false) {
+            s.value = false
+          }
         }
+        if (i >= 0) {
+          const s = this.getSelection(i)
+          /* WARNING: Don't change this behavior */
+          s && (s.value = true)
+        }
+        this.prevIndex = i
       }
-      if (i >= 0) {
-        const s = this.getSelection(i)
-        /* WARNING: Don't change this behavior */
-        s && (s.value = true)
-      }
-      this.prevIndex = i
-    }
-    this.isUpdatingIndex = false
+    })
   }
 
   static get requiredPaths() {
