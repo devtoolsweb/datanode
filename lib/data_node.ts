@@ -55,7 +55,7 @@ export interface IDataNode
   getNodeByPath(path: string): IDataNode | null
   getRelativePath(node: IDataNode, target: IDataNode): string
   getString(): string
-  makePath(path: string, createNode?: DataNodeCreator): IDataNode | null
+  makePath(path: string, createNode?: DataNodeCreator): IDataNode
   removeChild(child: IDataNode): this
   setEventTrap(value: boolean): this
   setValue(value: DataNodeValue): this
@@ -179,7 +179,7 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
     if (path.trimLeft().charAt(0) === DataNode.pathSeparator) {
       throw new Error(`DN0001: Path for successor of data node must be relative: "${path}"`)
     }
-    this.makePath(path)!.addChild(node)
+    this.makePath(path).addChild(node)
     return this
   }
 
@@ -287,7 +287,7 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
    * Creates all data tree nodes according to the specified path.
    * The path may contain relative components.
    */
-  makePath(path: string, createNode?: DataNodeCreator): IDataNode | null {
+  makePath(path: string, createNode?: DataNodeCreator): IDataNode {
     return this.walkPath(
       path,
       (node: IDataNode | null, pathParts?: string[]): IDataNode => {
@@ -309,7 +309,7 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
           return new (this.constructor as typeof DataNode)(p) as IDataNode
         }
       }
-    )
+    )!
   }
 
   removeChild(child: IDataNode): this {

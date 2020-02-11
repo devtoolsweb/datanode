@@ -10,8 +10,10 @@ import {
 } from './data_node_behavior'
 
 export interface IDnItemizedBehavior extends IDataNodeBehavior {
+  readonly allowMultiselect: boolean
   readonly dnIndex: IDataNode
   readonly dnItems: IDataNode
+  readonly roundRobin: boolean
 }
 
 export interface IDnItemizedBehaviorOpts extends IDataNodeBehaviorOpts {
@@ -27,7 +29,9 @@ type EssentialChildren = 'dnIndex' | 'dnItems'
 export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedBehavior {
   private static readonly selectionsMap = new WeakMap<IDataNode, IDataNode>()
   readonly flags!: IBitFlags<DnItemizedBehaviorFlags>
+
   protected readonly essentials: Partial<Record<EssentialChildren, IDataNode>> = {}
+  protected readonly selectedItems = new Set<IDataNode>()
 
   get allowMultiselect() {
     return this.flags.isSet('AllowMultiselect')
@@ -57,7 +61,18 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     })
   }
 
-  protected selectItem(item: IDataNode) {}
+  protected selectItem(item: IDataNode) {
+    const { selectedItems: xs, selectionsMap: sm } = this
+    xs.add(item)
+    if (!this.allowMultiselect) {
+      xs.forEach(x => {
+        if (x !== item) {
+          const s = sm.get(x)!
+          s.value = false
+        }
+      })
+    }
+  }
 
   protected unselectItem(item: IDataNode) {}
 

@@ -14,3 +14,9 @@ test('create', () => {
   expect(link1.getInt()).toBe(value)
   expect(link2.getInt()).toBe(value)
 })
+
+
+test('childIndex', () => {
+  const root = new DataNode({ name: 'root' })
+  const list = root.makePath('list')
+})

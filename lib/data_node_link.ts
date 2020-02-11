@@ -115,7 +115,7 @@ export class DataNodeLink extends DataNode implements IDataNodeLink {
     return this.target.listeners(event)
   }
 
-  makePath(path: string, createNode?: DataNodeCreator): IDataNode | null {
+  makePath(path: string, createNode?: DataNodeCreator) {
     return this.target.makePath(path, createNode)
   }
 
