@@ -1,4 +1,4 @@
-import { IBitFlags } from '@aperos/ts-goodies'
+import { IBitFlags, Memoize } from '@aperos/ts-goodies'
 import { ClassName } from '@aperos/essentials'
 import { IDataNode, IDataNodeEvent } from '../data_node'
 import {
@@ -9,33 +9,39 @@ import {
 } from './data_node_behavior'
 
 export interface IDnItemizedBehavior extends IDataNodeBehavior {
-  readonly allowMultiselect: boolean
+  readonly allowMultiSelect: boolean
   readonly dnIndex: IDataNode
   readonly dnItems: IDataNode
+  readonly firstSelectedIndex: number
   readonly roundRobin: boolean
+  readonly selectedCount: number
   unselectAll(): this
 }
 
 export interface IDnItemizedBehaviorOpts extends IDataNodeBehaviorOpts {
-  allowMultiselect?: boolean
+  allowMultiSelect?: boolean
   roundRobin?: boolean
   index?: number
 }
 
-export type DnItemizedBehaviorFlags = 'AllowMultiselect' | 'RoundRobin' | DataNodeBehaviorFlags
+export type DnItemizedBehaviorFlags = 'AllowMultiSelect' | 'RoundRobin' | DataNodeBehaviorFlags
 
 type EssentialChildren = 'dnIndex' | 'dnItems'
 
 @ClassName('DnItemizedBehavior')
 export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedBehavior {
-  private static readonly selectionsMap = new WeakMap<IDataNode, IDataNode>()
   readonly flags!: IBitFlags<DnItemizedBehaviorFlags>
 
-  protected readonly essentials: Partial<Record<EssentialChildren, IDataNode>> = {}
-  protected readonly selectedItems = new Set<IDataNode>()
+  constructor(opts: IDnItemizedBehaviorOpts) {
+    super(opts)
+  }
 
-  get allowMultiselect() {
-    return this.flags.isSet('AllowMultiselect')
+  get allowMultiSelect() {
+    return !!this.flags.isSet('AllowMultiSelect')
+  }
+
+  get firstSelectedIndex() {
+    return this.dnIndex.getInt()
   }
 
   get dnIndex() {
@@ -50,6 +56,10 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     return this.flags.isSet('RoundRobin')
   }
 
+  get selectedCount() {
+    return this.selectedItems.size
+  }
+
   unselectAll() {
     const { selectedItems: xs, selectionsMap: sm } = this
     xs.forEach(x => {
@@ -59,28 +69,42 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     return this
   }
 
-  protected readonly selectionChangeListener = (event: IDataNodeEvent) => {
-    const s = event.node
-    const p = s.parent!
-    this.performUpdates(() => {
-      if (s.value) {
-        this.selectItem(p)
-      } else {
-        this.unselectItem(p)
-      }
-    })
+  @Memoize()
+  protected get essentials() {
+    return {} as Partial<Record<EssentialChildren, IDataNode>>
+  }
+
+  @Memoize()
+  protected get selectionChangeListener() {
+    return (event: IDataNodeEvent) => {
+      const s = event.node
+      const p = s.parent!
+      this.performUpdates(() => {
+        if (s.value) {
+          this.selectItem(p)
+        } else {
+          this.unselectItem(p)
+        }
+      })
+    }
+  }
+
+  @Memoize()
+  protected get selectedItems() {
+    return new Set<IDataNode>()
   }
 
   protected initBehavior(opts: IDnItemizedBehaviorOpts) {
-    const { dataNode: dn, dnIndex, dnItems, flags, essentials: xs, selectionsMap: sm } = this
-    flags.setFlag('AllowMultiselect', opts.allowMultiselect)
-    flags.setFlag('RoundRobin', opts.roundRobin)
+    const { dataNode: dn, essentials: cn } = this
+    cn.dnIndex = dn.makePath('index')!
+    cn.dnItems = dn.makePath('items')!
 
-    xs.dnIndex = dn.makePath('index')!
-    xs.dnItems = dn.makePath('items')!
+    const { dnIndex, dnItems, flags, selectionsMap: sm } = this
+    flags.setFlagValue('AllowMultiSelect', !!opts.allowMultiSelect)
+    flags.setFlagValue('RoundRobin', !!opts.roundRobin)
 
     this.performUpdates(() => {
-      dnIndex.enumChildren(c => {
+      dnItems.enumChildren(c => {
         this.initItem(c)
       })
       const i = opts.index
@@ -122,7 +146,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
   protected selectItem(item: IDataNode) {
     const { selectedItems: xs, selectionsMap: sm } = this
     xs.add(item)
-    if (!this.allowMultiselect) {
+    if (!this.allowMultiSelect) {
       xs.forEach(x => {
         if (x !== item) {
           const s = sm.get(x)!
@@ -156,24 +180,48 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
   }
 
   protected applyIndex(index: number) {
-    const { allowMultiselect: ms, dnIndex, dnItems, roundRobin: rr, selectionsMap: sm } = this
+    const {
+      allowMultiSelect: ms,
+      dnIndex,
+      dnItems,
+      roundRobin: rr,
+      selectedItems: xs,
+      selectionsMap: sm
+    } = this
     const n = rr ? index % dnItems.childCount : index
     dnIndex.value = n
-    if (index < 0) {
+    if (n < 0) {
       this.unselectAll()
     } else {
-      dnItems.enumChildren((c, i) => {
+      let dn: IDataNode | null = null
+      dnItems.enumChildren((c, i = 0) => {
         const s = sm.get(c)!
-        s.value = n === i
-        if (!ms) {
+        if (i >= n) {
+          dn = c
+          s.value = true
           return 'Leave'
+        } else {
+          s.value = false
         }
         return
       })
+      if (!ms) {
+        xs.forEach(x => {
+          if (x !== dn) {
+            const s = sm.get(x)!
+            s.value = false
+          }
+        })
+      }
     }
   }
 
   private get selectionsMap() {
     return DnItemizedBehavior.selectionsMap
+  }
+
+  @Memoize()
+  static get selectionsMap() {
+    return new WeakMap<IDataNode, IDataNode>()
   }
 }

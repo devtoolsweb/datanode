@@ -318,7 +318,7 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
   }
 
   setEventTrap(value: boolean): this {
-    this.flags.setFlag('IsEventTrap', value)
+    this.flags.setFlagValue('IsEventTrap', value)
     return this
   }
 
