@@ -89,8 +89,12 @@ export class DataNodeBehavior extends BaseClass implements IDataNodeBehavior {
     return xs ? xs.get(dataNode) : undefined
   }
 
-  static isAssignedTo(dataNode: IDataNode) {
+  static getAssignedBehavior(dataNode: IDataNode): IDataNodeBehavior | undefined {
     const xs = this.behaviorMap.get((this as IBehaviorCtor).className!)
-    return xs && xs.has(dataNode)
+    return xs ? xs.get(dataNode) : undefined
+  }
+
+  static isAssignedTo(dataNode: IDataNode): boolean {
+    return !!this.getAssignedBehavior(dataNode)
   }
 }
