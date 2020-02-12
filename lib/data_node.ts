@@ -59,6 +59,7 @@ export interface IDataNode
   removeChild(child: IDataNode): this
   setEventTrap(value: boolean): this
   setValue(value: DataNodeValue): this
+  toggle(): this
   toJSON(): object
   walkPath(path: string, visit: DataNodeVisitor): IDataNode | null
 }
@@ -324,6 +325,20 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
 
   setValue(value: DataNodeValue) {
     this.value = value
+    return this
+  }
+
+  /**
+   * Changes the value of the boolean node to the opposite.
+   * The node must store the Boolean value.
+   */
+  toggle(): this {
+    const { value: v } = this
+    if (v === true || v === false) {
+      this.value = !v
+    } else {
+      throw new Error(`DN0025: Node value type of '${this.fullPath} is not boolean`)
+    }
     return this
   }
 
