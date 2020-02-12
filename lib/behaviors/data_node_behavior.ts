@@ -21,7 +21,7 @@ export interface IDataNodeBehaviorOpts extends IBaseClassOpts {
   dataPath?: string
 }
 
-export type DataNodeBehaviorFlags = 'IsUpdating' | BaseClassFlags
+export type DataNodeBehaviorFlags = BaseClassFlags
 
 interface IBehaviorCtor extends IConstructor<IDataNodeBehavior> {
   readonly className?: string
@@ -52,20 +52,6 @@ export class DataNodeBehavior extends BaseClass implements IDataNodeBehavior {
 
   protected get behaviorMap() {
     return DataNodeBehavior.behaviorMap
-  }
-
-  protected get isUpdating() {
-    return this.flags.isSet('IsUpdating')
-  }
-
-  protected performUpdates(update: () => void) {
-    const { flags: f, isUpdating: u } = this
-    if (!u) {
-      f.setFlag('IsUpdating')
-      update()
-      f.unset('IsUpdating')
-    }
-    return this
   }
 
   protected initBehavior(_: IDataNodeBehaviorOpts) {}
