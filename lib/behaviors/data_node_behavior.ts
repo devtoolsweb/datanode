@@ -12,7 +12,6 @@ import {
 import { IDataNode } from '../data_node'
 
 export interface IDataNodeBehavior extends IBaseClass {
-  readonly dnRoot: IDataNode
   readonly dataNode: IDataNode
 }
 
@@ -34,7 +33,6 @@ export class DataNodeBehavior extends BaseClass implements IDataNodeBehavior {
   static behaviorMap = new Map<string, WeakMap<IDataNode, IDataNodeBehavior>>()
 
   readonly flags!: IBitFlags<DataNodeBehaviorFlags>
-  readonly dnRoot: IDataNode
   readonly dataNode: IDataNode
 
   constructor(opts: IDataNodeBehaviorOpts) {
@@ -43,7 +41,6 @@ export class DataNodeBehavior extends BaseClass implements IDataNodeBehavior {
       throw new Error('DN0021: Data node behavior must have an explicit class name')
     }
     const { dataNode: root, dataPath: dp } = opts
-    this.dnRoot = root
     this.dataNode = dp ? root.getExistingNode(dp) : root
     this.validate()
     this.prepare()
