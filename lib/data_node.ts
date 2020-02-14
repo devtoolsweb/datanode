@@ -1,3 +1,8 @@
+/*
+ * TODO: It is necessary to refactor DataNode using a Map instead of NStrcut,
+ * keeping a hierarchical API.
+ * TODO: It is necessary to prohibit adding nodes  with matching names.
+ */
 import { Constructor, IBitFlags } from '@aperos/ts-goodies'
 import {
   BaseClass,
