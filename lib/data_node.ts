@@ -49,6 +49,7 @@ export interface IDataNode
   readonly isLink: boolean
   readonly parent: IDataNode | null
   readonly realPath: string
+  readonly root: IDataNode | null
   addChild(child: IDataNode): this
   addSuccessorNode(path: string, node: IDataNode): this
   findChildNode(name: string): IDataNode | null
@@ -131,7 +132,7 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
   private static nodeNameRegexp = /^\w[\s\w\-\.#():+_]*$/
 
   readonly flags!: IBitFlags<DataNodeFlags>
-  readonly root!: IDataNode
+  readonly root!: IDataNode | null
   readonly parent!: IDataNode | null
 
   protected $value: DataNodeValue | IDataNode
