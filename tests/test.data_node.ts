@@ -59,12 +59,10 @@ test('addSuccessorNode', () => {
   const parent = new DataNode({ name: 'parent' })
   parent.addSuccessorNode('a/b/c', new DataNode({ name: 'successor 1' }))
   parent.addSuccessorNode('x/y/z', new DataNode({ name: 'successor 2' }))
-  expect(() =>
-    parent.addSuccessorNode('/s2', new DataNode({ name: 'successor 3' }))
-  ).toThrow(Error)
-  expect(() =>
-    parent.addSuccessorNode('../s3', new DataNode({ name: 'successor 4' }))
-  ).toThrow(Error)
+  expect(() => parent.addSuccessorNode('/s2', new DataNode({ name: 'successor 3' }))).toThrow(Error)
+  expect(() => parent.addSuccessorNode('../s3', new DataNode({ name: 'successor 4' }))).toThrow(
+    Error
+  )
 })
 
 test('findChildNode', () => {

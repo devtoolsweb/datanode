@@ -78,23 +78,32 @@ export interface IDataNodeOpts extends IBaseClassOpts {
 export interface IDataNodeEvent extends ITypedEvent<IDataNodeEvents> {
   readonly node: IDataNode
   readonly child?: IDataNode
+  readonly childIndex?: number
 }
 
 export interface IDataNodeEventOpts extends ITypedEventOpts<IDataNodeEvents> {
   origin: IDataNode
   child?: IDataNode
+  childIndex?: number
 }
 
 export class DataNodeEvent extends TypedEvent<IDataNodeEvents> implements IDataNodeEvent {
   readonly child?: IDataNode
+  readonly childIndex?: number
 
   constructor(p: IDataNodeEventOpts) {
     super(p)
     p.child && (this.child = p.child)
+    p.childIndex !== undefined && (this.childIndex = p.childIndex)
   }
 
   get node(): IDataNode {
     return this.origin as IDataNode
+  }
+
+  toString() {
+    const { child: c, childIndex: i, type } = this
+    return `(DataNodeEvent ${type} "${c ? c.fullPath : ''}" ${i})`
   }
 }
 
@@ -175,11 +184,6 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
       this.$value = value
       this.emitEvent(new DataNodeEvent({ origin: this, type: 'change' }))
     }
-  }
-
-  addChild(child: IDataNode): this {
-    super.addChild(child)
-    return this.emitEvent(new DataNodeEvent({ child, origin: this, type: 'addChild' }))
   }
 
   addSuccessorNode(path: string, node: IDataNode): this {
@@ -288,6 +292,19 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
     } else {
       return d.toString()
     }
+  }
+
+  insertChild(child: IDataNode, index = Infinity): this {
+    const childIndex = this.computeNewChildIndex(index)
+    super.insertChild(child, index)
+    return this.emitEvent(
+      new DataNodeEvent({
+        child,
+        childIndex,
+        origin: this,
+        type: 'addChild'
+      })
+    )
   }
 
   /**

@@ -64,6 +64,24 @@ test('index', () => {
   }
 })
 
+test('insert item', () => {
+  const list = createList()
+  new DnItemizedBehavior({ allowMultiSelect: true, dataNode: list })
+  const dnIndex = getf(list, 'index')
+  const dnItems = getf(list, 'items')
+  let n = 5
+  let item = getf(list, `items/item ${n}/selected`)
+  item.value = true
+  expect(dnIndex.value).toBe(n)
+  expect(countSelected(list)).toBe(1)
+
+  item = new DataNode({ name: 'new item 1' })
+  dnItems.insertChild(item, 0)
+  expect(dnIndex.value).toBe(n + 1)
+  expect(countSelected(list)).toBe(1)
+  expect(getf(list, `items/item ${n}/selected`).value).toBeTruthy()
+})
+
 test('round robin', () => {
   const list = createList()
   new DnItemizedBehavior({ dataNode: list, roundRobin: true })

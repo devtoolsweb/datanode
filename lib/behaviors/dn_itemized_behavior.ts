@@ -157,10 +157,16 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
 
     dnItems
       .on('addChild', event => {
-        const c = event.child!
-        this.initItem(c)
-        const s = this.getSelection(c)
-        s.on('change', this.selectionChangeListener)
+        this.performUpdates(() => {
+          const c = event.child!
+          this.initItem(c)
+          const s = this.getSelection(c)
+          s.on('change', this.selectionChangeListener)
+          const i = dnIndex.getInt()
+          if (event.childIndex! <= this.firstSelectedIndex) {
+            dnIndex.value = i + 1
+          }
+        })
       })
       .on('removeChild', event => {
         this.performUpdates(() => this.releaseItem(event.child!))
