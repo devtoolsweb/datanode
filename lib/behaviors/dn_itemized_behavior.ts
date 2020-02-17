@@ -16,6 +16,7 @@ export interface IDnItemizedBehavior extends IDataNodeBehavior {
   readonly firstSelectedIndex: number
   readonly roundRobin: boolean
   readonly selectedCount: number
+  selectNext(increment?: number): this
   unselectAll(): this
 }
 
@@ -64,6 +65,18 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
 
   get selectedCount() {
     return this.selectedItems.size
+  }
+
+  selectNext(increment = 1): this {
+    const { dnIndex, dnItems, roundRobin: rr } = this
+    let i = dnIndex.getInt()
+    i += increment
+    if (rr) {
+      const n = dnItems.childCount
+      i = (i + n) % n
+    }
+    dnIndex.value = i
+    return this
   }
 
   unselectAll() {
@@ -138,7 +151,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     const { dnIndex, dnItems, flags } = this
     flags.setFlagValue('AllowMultiSelect', !!opts.allowMultiSelect)
     flags.setFlagValue('KeepSelection', !!opts.keepSelection)
-    flags.setFlagValue('RoundRobin', !!opts.roundRobin)
+    flags.setFlagValue('RoundRobin', opts.roundRobin !== false)
 
     this.performUpdates(() => {
       dnItems.enumChildren(c => {
