@@ -275,21 +275,19 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     } else {
       let dn: IDataNode | null = null
       dnItems.enumChildren((c, i = 0) => {
-        const s = this.getSelection(c)
         if (i >= n) {
           dn = c
-          s.value = true
+          this.selectItem(c)
           return 'Leave'
         } else {
-          s.value = false
+          this.unselectItem(c)
         }
         return
       })
       if (!ms) {
         xs.forEach(x => {
           if (x !== dn) {
-            const s = this.getSelection(x)
-            s.value = false
+            this.unselectItem(x)
           }
         })
       }
