@@ -67,6 +67,7 @@ export interface IDataNode
   setValue(value: DataNodeValue): this
   toggle(): this
   toJSON(): object
+  toString(): string
   walkPath(path: string, visit: DataNodeVisitor): IDataNode | null
 }
 
