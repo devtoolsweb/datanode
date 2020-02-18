@@ -82,8 +82,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
   unselectAll() {
     const { selectedItems: xs } = this
     xs.forEach(x => {
-      const s = this.getSelection(x)
-      s.value = false
+      this.unselectItem(x, true)
     })
     return this
   }
@@ -240,8 +239,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
       if (!this.allowMultiSelect) {
         xs.forEach(x => {
           if (x !== item) {
-            const s = this.getSelection(x)
-            s.value = false
+            this.unselectItem(x, true)
           }
         })
       }
@@ -277,17 +275,17 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
       dnItems.enumChildren((c, i = 0) => {
         if (i >= n) {
           dn = c
-          this.selectItem(c)
+          this.selectItem(c, true)
           return 'Leave'
         } else {
-          this.unselectItem(c)
+          this.unselectItem(c, true)
         }
         return
       })
       if (!ms) {
         xs.forEach(x => {
           if (x !== dn) {
-            this.unselectItem(x)
+            this.unselectItem(x, true)
           }
         })
       }
