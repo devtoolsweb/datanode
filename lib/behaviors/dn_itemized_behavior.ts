@@ -82,7 +82,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
   unselectAll() {
     const { selectedItems: xs } = this
     xs.forEach(x => {
-      this.unselectItem(x, true)
+      this.unselectItem(x)
     })
     return this
   }
@@ -103,9 +103,9 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
       const p = s.parent!
       this.performUpdates(() => {
         if (s.value) {
-          this.selectItem(p)
+          this.selectItem(p, false)
         } else {
-          this.unselectItem(p)
+          this.unselectItem(p, false)
         }
       })
     }
@@ -205,7 +205,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     const n = dnItems.childCount
     const ci = item.childIndex
     let index = i
-    this.unselectItem(item, true)
+    this.unselectItem(item)
     this.selectedItems.delete(item)
     const f = this.findFirstSelectedIndex()
     if (this.allowMultiSelect) {
@@ -218,7 +218,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
       if (n > 1) {
         index = Math.max(0, i - 1)
         const next = index < n - 1 ? index : index - 1
-        this.selectItem(dnItems.getChildAt(next === 0 ? 1 : next)!, true)
+        this.selectItem(dnItems.getChildAt(next === 0 ? 1 : next)!)
       } else {
         index = -1
       }
@@ -231,7 +231,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     sm.delete(item)
   }
 
-  protected selectItem(item: IDataNode, standalone = false) {
+  protected selectItem(item: IDataNode, standalone = true) {
     const { selectedItems: xs } = this
     this.getSelection(item).value = true
     xs.add(item)
@@ -239,7 +239,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
       if (!this.allowMultiSelect) {
         xs.forEach(x => {
           if (x !== item) {
-            this.unselectItem(x, true)
+            this.unselectItem(x)
           }
         })
       }
@@ -255,7 +255,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     }
   }
 
-  protected unselectItem(item: IDataNode, standalone = false) {
+  protected unselectItem(item: IDataNode, standalone = true) {
     const { selectedItems: xs } = this
     this.getSelection(item).value = false
     xs.delete(item)
@@ -275,17 +275,17 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
       dnItems.enumChildren((c, i = 0) => {
         if (i >= n) {
           dn = c
-          this.selectItem(c, true)
+          this.selectItem(c)
           return 'Leave'
         } else {
-          this.unselectItem(c, true)
+          this.unselectItem(c)
         }
         return
       })
       if (!ms) {
         xs.forEach(x => {
           if (x !== dn) {
-            this.unselectItem(x, true)
+            this.unselectItem(x)
           }
         })
       }
