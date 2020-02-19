@@ -103,9 +103,6 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
       const p = s.parent!
       const { inProcessNodes: xs } = this
       this.safelyUpdateNode(s, () => {
-        console.log('itemized behavior:', event.node.fullPath, event.node.value)
-        // console.log('==============================')
-        // console.log(s.parent!.parent!.toString())
         xs.add(s)
         if (s.value) {
           this.selectItem(p, false)

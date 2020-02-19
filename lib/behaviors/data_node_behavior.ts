@@ -1,7 +1,7 @@
 /*
  * TODO: Cleanup event listeners on dispose.
  */
-import { IConstructor, IBitFlags, Memoize } from '@aperos/ts-goodies'
+import { IConstructor, Memoize } from '@aperos/ts-goodies'
 import {
   BaseClass,
   BaseClassFlags,
@@ -32,7 +32,6 @@ interface IBehaviorCtor extends IConstructor<IDataNodeBehavior> {
 export class DataNodeBehavior extends BaseClass implements IDataNodeBehavior {
   static behaviorMap = new Map<string, WeakMap<IDataNode, IDataNodeBehavior>>()
 
-  readonly flags!: IBitFlags<DataNodeBehaviorFlags>
   readonly dataNode: IDataNode
 
   constructor(opts: IDataNodeBehaviorOpts) {
