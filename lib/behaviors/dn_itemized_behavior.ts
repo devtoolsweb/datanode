@@ -75,7 +75,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
       const n = dnItems.childCount
       i = (i + n) % n
     }
-    dnIndex.value = i
+    this.safelySetNodeValue(dnIndex, i)
     return this
   }
 
@@ -101,7 +101,9 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     return (event: IDataNodeEvent) => {
       const s = event.node
       const p = s.parent!
-      this.performUpdates(() => {
+      const { inProcessNodes: xs } = this
+      this.safelyUpdateNode(s, () => {
+        xs.add(s)
         if (s.value) {
           this.selectItem(p, false)
         } else {
@@ -152,36 +154,32 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     flags.setFlagValue('KeepSelection', !!opts.keepSelection)
     flags.setFlagValue('RoundRobin', opts.roundRobin !== false)
 
-    this.performUpdates(() => {
-      dnItems.enumChildren(c => {
-        this.initItem(c)
-      })
-      const i = opts.index
-      const v = dnIndex.value
-      this.applyIndex(i === undefined ? (typeof v === 'number' ? v : -1) : i)
+    dnItems.enumChildren((c, i) => {
+      this.initItem(c, dnIndex.value === i)
     })
+    const i = opts.index
+    const v = dnIndex.value
+    this.applyIndex(i === undefined ? (typeof v === 'number' ? v : -1) : i)
 
     dnIndex.on('change', () => {
-      if (!this.isUpdating) {
+      this.safelyUpdateNode(dnIndex, () => {
         this.applyIndex(dnIndex.getInt())
-      }
+      })
     })
 
     dnItems
       .on('addChild', event => {
-        this.performUpdates(() => {
-          const c = event.child!
-          this.initItem(c)
-          const s = this.getSelection(c)
-          s.on('change', this.selectionChangeListener)
-          const i = dnIndex.getInt()
-          if (event.childIndex! <= this.firstSelectedIndex) {
-            dnIndex.value = i + 1
-          }
-        })
+        const c = event.child!
+        this.initItem(c)
+        const s = this.getSelection(c)
+        s.on('change', this.selectionChangeListener)
+        const i = dnIndex.getInt()
+        if (event.childIndex! <= this.firstSelectedIndex) {
+          this.safelySetNodeValue(dnIndex, i + 1)
+        }
       })
       .on('removeChild', event => {
-        this.performUpdates(() => this.releaseItem(event.child!))
+        this.releaseItem(event.child!)
       })
   }
 
@@ -192,7 +190,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     if (!sm.has(dn)) {
       sm.set(dn, s)
     }
-    s.value = selected
+    this.safelySetNodeValue(s, selected)
     s.on('change', this.selectionChangeListener)
   }
 
@@ -226,14 +224,15 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
       index = -1
     }
     if (index !== i) {
-      dnIndex.value = index
+      this.safelySetNodeValue(dnIndex, index)
     }
     sm.delete(item)
   }
 
   protected selectItem(item: IDataNode, standalone = true) {
     const { selectedItems: xs } = this
-    this.getSelection(item).value = true
+    const s = this.getSelection(item)
+    this.safelySetNodeValue(s, true)
     xs.add(item)
     if (!standalone) {
       if (!this.allowMultiSelect) {
@@ -251,13 +250,14 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     const { dnIndex } = this
     const index = this.findFirstSelectedIndex()
     if (index !== dnIndex.value) {
-      dnIndex.value = index
+      this.safelySetNodeValue(dnIndex, index)
     }
   }
 
   protected unselectItem(item: IDataNode, standalone = true) {
     const { selectedItems: xs } = this
-    this.getSelection(item).value = false
+    const s = this.getSelection(item)
+    this.safelySetNodeValue(s, false)
     xs.delete(item)
     if (!standalone) {
       this.setFirstSelectedIndex()
@@ -267,7 +267,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
   protected applyIndex(index: number) {
     const { allowMultiSelect: ms, dnIndex, dnItems, roundRobin: rr, selectedItems: xs } = this
     const n = rr ? index % dnItems.childCount : index
-    dnIndex.value = n
+    this.safelySetNodeValue(dnIndex, n)
     if (n < 0) {
       this.unselectAll()
     } else {

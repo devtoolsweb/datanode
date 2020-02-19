@@ -2,9 +2,9 @@
  * A component can be created from any class that supports IBaseClass.
  */
 import { IConstructor } from '@aperos/ts-goodies'
-import { IDataNode } from '@aperos/datanode'
 import { IBaseClass, IBaseClassOpts } from '@aperos/essentials'
 import { IBaseEvents, ITypedEventEmitter } from '@aperos/event-emitter'
+import { IDataNode } from './data_node'
 
 export interface IDataComponent extends IBaseClass {
   readonly dataNode: IDataNode
