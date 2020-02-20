@@ -1,24 +1,19 @@
 /*
  * TODO: Cleanup event listeners on dispose.
  */
-import { IConstructor, Memoize } from '@aperos/ts-goodies'
+import { IConstructor } from '@aperos/ts-goodies'
+import { BaseClass, BaseClassFlags, ClassName } from '@aperos/essentials'
+import { IDataNode } from '../data_node'
 import {
-  BaseClass,
-  BaseClassFlags,
-  ClassName,
-  IBaseClass,
-  IBaseClassOpts
-} from '@aperos/essentials'
-import { DataNodeValue, IDataNode } from '../data_node'
+  DataComponentMixin,
+  IDataComponent,
+  IDataComponentConstructor,
+  IDataComponentOpts
+} from '../data_component'
 
-export interface IDataNodeBehavior extends IBaseClass {
-  readonly dataNode: IDataNode
-}
+export interface IDataNodeBehavior extends IDataComponent {}
 
-export interface IDataNodeBehaviorOpts extends IBaseClassOpts {
-  dataNode: IDataNode
-  dataPath?: string
-}
+export interface IDataNodeBehaviorOpts extends IDataComponentOpts {}
 
 export type DataNodeBehaviorFlags = BaseClassFlags
 
@@ -28,31 +23,29 @@ interface IBehaviorCtor extends IConstructor<IDataNodeBehavior> {
   isAssignedTo(dataNode: IDataNode): boolean
 }
 
-@ClassName('DataNodeBehavior')
-export class DataNodeBehavior extends BaseClass implements IDataNodeBehavior {
-  static behaviorMap = new Map<string, WeakMap<IDataNode, IDataNodeBehavior>>()
+export const MixinDataNodeBehaviorDataComponent = (
+  base: IConstructor<BaseClass>
+): IDataComponentConstructor => DataComponentMixin<IConstructor<BaseClass>>(base)
 
-  readonly dataNode: IDataNode
+export const BaseDataNodeBehaviorConstructor = MixinDataNodeBehaviorDataComponent(BaseClass)
+
+@ClassName('DataNodeBehavior')
+export class DataNodeBehavior extends BaseDataNodeBehaviorConstructor implements IDataNodeBehavior {
+  static behaviorMap = new Map<string, WeakMap<IDataNode, IDataNodeBehavior>>()
 
   constructor(opts: IDataNodeBehaviorOpts) {
     super(opts)
     if (!this.className) {
       throw new Error('DN0021: Data node behavior must have an explicit class name')
     }
-    const { dataNode: root, dataPath: dp } = opts
-    this.dataNode = dp ? root.getExistingNode(dp) : root
     this.validate()
+    this.initComponent(opts)
     this.prepare()
     this.initBehavior(opts)
   }
 
   protected get behaviorMap() {
     return DataNodeBehavior.behaviorMap
-  }
-
-  @Memoize()
-  protected get inProcessNodes() {
-    return new Set<IDataNode>()
   }
 
   protected initBehavior(_: IDataNodeBehaviorOpts) {}
@@ -68,21 +61,6 @@ export class DataNodeBehavior extends BaseClass implements IDataNodeBehavior {
       bm.set(cn, xs)
     }
     xs.set(dn, this)
-  }
-
-  protected safelySetNodeValue(node: IDataNode, value: DataNodeValue) {
-    this.safelyUpdateNode(node, () => {
-      node.value = value
-    })
-  }
-
-  protected safelyUpdateNode(node: IDataNode, update: () => void) {
-    const { inProcessNodes: xs } = this
-    if (!xs.has(node)) {
-      xs.add(node)
-      update()
-      xs.delete(node)
-    }
   }
 
   protected validate() {

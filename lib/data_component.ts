@@ -4,7 +4,7 @@
 import { IConstructor } from '@aperos/ts-goodies'
 import { IBaseClass, IBaseClassOpts } from '@aperos/essentials'
 import { IBaseEvents, ITypedEventEmitter } from '@aperos/event-emitter'
-import { IDataNode } from './data_node'
+import { IDataNode, DataNodeValue } from './data_node'
 
 export interface IDataComponent extends IBaseClass {
   readonly dataNode: IDataNode
@@ -23,6 +23,8 @@ export interface IInternalDataComponent extends IDataComponent {
     eventName: keyof Events,
     listener: Events[keyof Events]
   ): this
+  safelySetNodeValue(node: IDataNode, value: DataNodeValue): this
+  safelyUpdateNode(node: IDataNode, update: () => void): this
   setupEventListeners(): void
 }
 
@@ -48,6 +50,7 @@ export function DataComponentMixin<TBase extends IConstructor<IBaseClass>>(
       return uiDataComponentKnownNodes
     }
 
+    private inProcessNodes!: WeakSet<IDataNode>
     private [symActiveEventMap]: ActiveEventMap
     private [symDataNode]: IDataNode
     private [symNodeCache]: Partial<
@@ -96,6 +99,26 @@ export function DataComponentMixin<TBase extends IConstructor<IBaseClass>>(
       }
       x.push([eventName, listener])
       emitter.on(eventName, listener as any)
+      return this
+    }
+
+    safelySetNodeValue(node: IDataNode, value: DataNodeValue) {
+      this.safelyUpdateNode(node, () => {
+        node.value = value
+      })
+      return this
+    }
+
+    safelyUpdateNode(node: IDataNode, update: () => void) {
+      let xs = this.inProcessNodes
+      if (!xs) {
+        this.inProcessNodes = xs = new WeakSet<IDataNode>()
+      }
+      if (!xs.has(node)) {
+        xs.add(node)
+        update()
+        xs.delete(node)
+      }
       return this
     }
 
