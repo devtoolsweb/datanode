@@ -75,11 +75,11 @@ export function DataComponentMixin<TBase extends IConstructor<IBaseClass>>(
 
     initComponent(opts: IDataComponentOpts) {
       if (!opts.dataNode) {
-        throw new Error('DN0026: DataComponent parameters require a data node')
+        throw new Error('DN0025: DataComponent parameters require a data node')
       }
       const { dataNode: root, dataPath: dp } = opts
       if (typeof dp === 'string' && !dp) {
-        throw new Error('UI0027: The data node path cannot be an emtpy string')
+        throw new Error('UI0026: The data node path cannot be an emtpy string')
       }
       const dn = dp ? root.getExistingNode(dp) : root
       this[symDataNode] = dn

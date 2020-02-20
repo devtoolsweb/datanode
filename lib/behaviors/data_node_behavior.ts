@@ -19,7 +19,6 @@ export type DataNodeBehaviorFlags = BaseClassFlags
 
 interface IBehaviorCtor extends IConstructor<IDataNodeBehavior> {
   readonly className?: string
-  readonly requiredPaths: Array<string>
   isAssignedTo(dataNode: IDataNode): boolean
 }
 
@@ -38,7 +37,6 @@ export class DataNodeBehavior extends BaseDataNodeBehaviorConstructor implements
     if (!this.className) {
       throw new Error('DN0021: Data node behavior must have an explicit class name')
     }
-    this.validate()
     this.initComponent(opts)
     this.prepare()
     this.initBehavior(opts)
@@ -61,21 +59,6 @@ export class DataNodeBehavior extends BaseDataNodeBehaviorConstructor implements
       bm.set(cn, xs)
     }
     xs.set(dn, this)
-  }
-
-  protected validate() {
-    const ctor = this.constructor as IBehaviorCtor
-    const paths = ctor.requiredPaths
-    const dn = this.dataNode
-    for (const path of paths) {
-      if (!dn.getNodeByPath(path)) {
-        throw new Error(`DN0023: Data node '${dn.fullPath}' has no child '${path}'`)
-      }
-    }
-  }
-
-  static get requiredPaths(): Array<string> {
-    return []
   }
 
   static findBehavior(name: string, dataNode: IDataNode) {

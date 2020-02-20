@@ -361,7 +361,7 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
     if (v === true || v === false) {
       this.value = !v
     } else {
-      throw new Error(`DN0025: Node value type of '${this.fullPath} is not boolean`)
+      throw new Error(`DN0023: Node value type of '${this.fullPath} is not boolean`)
     }
     return this
   }
