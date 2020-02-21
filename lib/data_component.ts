@@ -36,33 +36,29 @@ export interface IDataComponentConstructor extends IConstructor<IInternalDataCom
 type ActiveEventTuple = [string | number | Symbol, any]
 type ActiveEventMap = Map<ITypedEventEmitter, Array<ActiveEventTuple>>
 
-const symActiveEventMap = Symbol()
-const symDataNode = Symbol()
-const symNodeCache = Symbol()
-
 export const uiDataComponentKnownNodes = {}
 
 export function DataComponentMixin<TBase extends IConstructor<IBaseClass>>(
   Base: TBase
 ): TBase & IDataComponentConstructor {
   return class MixedDataComponent extends Base implements IDataComponent {
+    private $activeEventMap!: ActiveEventMap
+    private $dataNode!: IDataNode
+    private $nodeCache!: Partial<
+      Record<keyof typeof MixedDataComponent.knownDescendantNodes, IDataNode>
+    >
+    private inProcessNodes!: WeakSet<IDataNode>
+
     static get knownDescendantNodes() {
       return uiDataComponentKnownNodes
     }
 
-    private inProcessNodes!: WeakSet<IDataNode>
-    private [symActiveEventMap]: ActiveEventMap
-    private [symDataNode]: IDataNode
-    private [symNodeCache]: Partial<
-      Record<keyof typeof MixedDataComponent.knownDescendantNodes, IDataNode>
-    >
-
     get dataNode() {
-      return this[symDataNode]
+      return this.$dataNode
     }
 
     get nodeCache() {
-      return this[symNodeCache]
+      return this.$nodeCache
     }
 
     cleanupEventListeners() {
@@ -82,7 +78,7 @@ export function DataComponentMixin<TBase extends IConstructor<IBaseClass>>(
         throw new Error('UI0026: The data node path cannot be an emtpy string')
       }
       const dn = dp ? root.getExistingNode(dp) : root
-      this[symDataNode] = dn
+      this.$dataNode = dn
       this.initNodeCache()
     }
 
@@ -125,15 +121,15 @@ export function DataComponentMixin<TBase extends IConstructor<IBaseClass>>(
     setupEventListeners() {}
 
     private get activeListeners() {
-      let xs = this[symActiveEventMap]
+      let xs = this.$activeEventMap
       if (!xs) {
-        xs = this[symActiveEventMap] = new Map<ITypedEventEmitter, Array<ActiveEventTuple>>()
+        xs = this.$activeEventMap = new Map<ITypedEventEmitter, Array<ActiveEventTuple>>()
       }
       return xs
     }
 
     private initNodeCache() {
-      this[symNodeCache] = {}
+      this.$nodeCache = {}
       const dn = this.dataNode
       const ctor = this.constructor as IDataComponentConstructor
       Object.entries(ctor.knownDescendantNodes).forEach(([k, v]) => {

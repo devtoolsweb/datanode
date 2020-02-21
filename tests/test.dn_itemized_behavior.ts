@@ -25,7 +25,7 @@ test('create', () => {
   const b = new DnItemizedBehavior({ dataNode: list })
   expect(b.allowMultiSelect).toBeFalsy()
   expect(b.firstSelectedIndex).toBe(-1)
-  expect(b.roundRobin).toBeFalsy()
+  expect(b.roundRobin).toBeTruthy()
   expect(b.selectedCount).toBe(0)
   expect(countSelected(list)).toBe(0)
   expect(getf(list, 'index').value).toBe(-1)
@@ -84,8 +84,9 @@ test('insert item', () => {
 
 test('round robin', () => {
   const list = createList()
-  new DnItemizedBehavior({ dataNode: list, roundRobin: true })
+  const b = new DnItemizedBehavior({ dataNode: list, roundRobin: true })
   const dnIndex = getf(list, 'index')
+  expect(b.roundRobin).toBeTruthy()
   for (let i = 0; i < 100; i++) {
     const index = Math.trunc(Math.random() * getf(list, 'items').childCount)
     dnIndex.value = getf(list, 'items').childCount + index

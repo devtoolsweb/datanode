@@ -101,9 +101,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     return (event: IDataNodeEvent) => {
       const s = event.node
       const p = s.parent!
-      const { inProcessNodes: xs } = this
       this.safelyUpdateNode(s, () => {
-        xs.add(s)
         if (s.value) {
           this.selectItem(p, false)
         } else {
