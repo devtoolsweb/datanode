@@ -159,9 +159,9 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     const v = dnIndex.value
     this.applyIndex(i === undefined ? (typeof v === 'number' ? v : -1) : i)
 
-    dnIndex.on('change', () => {
+    dnIndex.on('change', event => {
       this.safelyUpdateNode(dnIndex, () => {
-        this.applyIndex(dnIndex.getInt())
+        event.confirm(this.applyIndex(dnIndex.getInt()))
       })
     })
 
@@ -288,6 +288,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
         })
       }
     }
+    return n
   }
 
   private get selectionsMap() {

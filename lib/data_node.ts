@@ -183,7 +183,15 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
   set value(value: DataNodeValue) {
     if (this.$value !== value) {
       this.$value = value
-      this.emitEvent(new DataNodeEvent({ origin: this, type: 'change' }))
+      this.emitEvent(
+        new DataNodeEvent({
+          confirmCallback: p => {
+            this.$value = p.result
+          },
+          origin: this,
+          type: 'change'
+        })
+      )
     }
   }
 
