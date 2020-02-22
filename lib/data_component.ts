@@ -75,7 +75,7 @@ export function DataComponentMixin<TBase extends IConstructor<IBaseClass>>(
       }
       const { dataNode: root, dataPath: dp } = opts
       if (typeof dp === 'string' && !dp) {
-        throw new Error('UI0026: The data node path cannot be an emtpy string')
+        throw new Error('DN0026: The data node path cannot be an emtpy string')
       }
       const dn = dp ? root.getExistingNode(dp) : root
       this.$dataNode = dn
