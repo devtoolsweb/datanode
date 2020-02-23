@@ -90,6 +90,7 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
     xs.forEach(x => {
       this.unselectItem(x)
     })
+    this.safelySetNodeValue(this.dnIndex, -1)
     return this
   }
 

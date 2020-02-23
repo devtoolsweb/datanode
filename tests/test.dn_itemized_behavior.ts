@@ -181,3 +181,18 @@ test('select next item', () => {
     }
   }
 })
+
+test('unselect', () => {
+  const list = createList()
+  const b = new DnItemizedBehavior({ dataNode: list, allowMultiSelect: true })
+  const dnIndex = getf(list, 'index')
+  const dnItems = getf(list, 'items')
+  dnItems.enumChildren(c => {
+    getf(c, 'selected').value = true
+  })
+  expect(countSelected(list)).toBe(dnItems.childCount)
+  expect(dnIndex.getInt()).toBe(0)
+  b.unselectAll()
+  expect(countSelected(list)).toBe(0)
+  expect(dnIndex.getInt()).toBe(-1)
+})
