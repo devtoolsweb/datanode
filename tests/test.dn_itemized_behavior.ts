@@ -162,3 +162,22 @@ test('remove item: multiple selections', () => {
   dnItems.removeChild(dnItems.firstChild!)
   expect(dnIndex.value).toBe(-1)
 })
+
+test('select next item', () => {
+  const list = createList()
+  const b = new DnItemizedBehavior({ dataNode: list })
+  const dnIndex = getf(list, 'index')
+  const dnItems = getf(list, 'items')
+  const n = dnItems.childCount
+  let index = dnIndex.getInt()
+  for (let i = 0; i < 100; i++) {
+    const increment = Math.trunc(4 * n * Math.random()) - 2 * n
+    if (increment) {
+      b.selectNext(increment)
+      index = (((index + increment) % n) + n) % n
+      expect(dnIndex.getInt()).toBe(index)
+      expect(countSelected(list)).toBe(1)
+      expect(getf(dnItems.getChildAt(index)!, 'selected').getBoolean()).toBeTruthy()
+    }
+  }
+})

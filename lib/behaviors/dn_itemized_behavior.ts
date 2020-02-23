@@ -68,14 +68,20 @@ export class DnItemizedBehavior extends DataNodeBehavior implements IDnItemizedB
   }
 
   selectNext(increment = 1): this {
+    if (increment === 0) {
+      throw new Error(
+        `DN0027: Itemized behavior index increment step cannot be 0: ${this.dataNode.fullPath}`
+      )
+    }
     const { dnIndex, dnItems, roundRobin: rr } = this
     let i = dnIndex.getInt()
     i += increment
     if (rr) {
       const n = dnItems.childCount
-      i = (i + n) % n
+      i = ((i % n) + n) % n
     }
-    this.safelySetNodeValue(dnIndex, i)
+    // WARNING: Don't use method safelySetNodeValue() here.
+    dnIndex.value = i
     return this
   }
 
