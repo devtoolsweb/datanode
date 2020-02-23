@@ -1,5 +1,7 @@
-/**
+/*
  * A component can be created from any class that supports IBaseClass.
+ *
+ * TODO: Add translated known node names, e.g. { selected: 'marked' } and so on.
  */
 import { IConstructor } from '@aperos/ts-goodies'
 import { IBaseClass, IBaseClassOpts } from '@aperos/essentials'
@@ -67,6 +69,10 @@ export function DataComponentMixin<TBase extends IConstructor<IBaseClass>>(
           emitter.off(eventName as never, listener as never)
         }
       }
+    }
+
+    dispose() {
+      this.cleanupEventListeners()
     }
 
     initComponent(opts: IDataComponentOpts) {
