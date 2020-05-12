@@ -1,14 +1,15 @@
 import path from 'path'
-import pluginTypescript from 'rollup-plugin-typescript2'
 import pluginDts from 'rollup-plugin-dts'
+import pluginTypescript from 'rollup-plugin-typescript2'
 import { terser as pluginTerser } from 'rollup-plugin-terser'
 import pkg from './package.json'
+import tsconfig from './tsconfig.json'
 
 const external = Object.keys(pkg.dependencies || {})
-
+const buildDir = tsconfig.compilerOptions.outDir
 const targetDir = 'dist'
 
-const plugins = [
+const standardPlugins = [
   pluginTypescript({
     useTsconfigDeclarationDir: true,
     verbosity: 1
@@ -16,7 +17,7 @@ const plugins = [
 ]
 
 if (process.env.BUILD === 'production') {
-  plugins.push(
+  standardPlugins.push(
     pluginTerser({
       output: { comments: false },
       toplevel: true
@@ -24,21 +25,21 @@ if (process.env.BUILD === 'production') {
   )
 }
 
+const makeConf = (input, file, format = 'cjs', plugins = null, sourcemap = true) => ({
+  external,
+  input,
+  output: { file, format, sourcemap },
+  plugins: plugins === null ? standardPlugins : plugins
+})
+
 export default [
-  {
-    input: 'lib/index.ts',
-    external,
-    output: {
-      file: path.join(targetDir, 'index.js'),
-      format: 'es',
-      name: 'index',
-      sourcemap: true
-    },
-    plugins
-  },
-  {
-    input: './build/lib/index.d.ts',
-    output: [{ file: path.join(targetDir, 'index.d.ts'), format: 'es' }],
-    plugins: [pluginDts({ verbose: true })]
-  }
+  makeConf('lib/index.ts', path.join(targetDir, 'index.cjs.js')),
+  makeConf('lib/index.ts', path.join(targetDir, 'index.esm.js'), 'es'),
+  makeConf(
+    path.join(...[buildDir, ...(tsconfig.include.length > 1 ? ['lib'] : []), 'index.d.ts']),
+    path.join(targetDir, 'index.d.ts'),
+    'es',
+    [pluginDts({ verbose: true })],
+    false
+  )
 ]
