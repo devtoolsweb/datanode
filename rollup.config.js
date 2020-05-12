@@ -4,10 +4,7 @@ import pluginDts from 'rollup-plugin-dts'
 import { terser as pluginTerser } from 'rollup-plugin-terser'
 import pkg from './package.json'
 
-const external = [
-  ...Object.keys(process.binding('natives')),
-  ...Object.keys(pkg.dependencies || {})
-]
+const external = Object.keys(pkg.dependencies || {})
 
 const targetDir = 'dist'
 
@@ -33,7 +30,7 @@ export default [
     external,
     output: {
       file: path.join(targetDir, 'index.js'),
-      format: 'cjs',
+      format: 'es',
       name: 'index',
       sourcemap: true
     },
