@@ -1,4 +1,4 @@
-# Aperos datanode
+# @aperos/datanode
 
 The data node allows you to build convenient hierarchical structures
 with tracking of change events.
