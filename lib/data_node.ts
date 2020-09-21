@@ -17,7 +17,7 @@ import {
   NStructContainerMixin
 } from '@aperos/essentials'
 import {
-  EventEmitterConstructor,
+  Constructor,
   EventEmitterMixin,
   IBaseEvents,
   ITypedEvent,
@@ -127,7 +127,7 @@ export const MixinDataNodeNStructContainer = (
 
 export const MixinDataNodeEventEmitter = (
   base: DataNodeNStructContainer
-): DataNodeNStructContainer & EventEmitterConstructor<ITypedEventEmitter<IDataNodeEvents>> =>
+): DataNodeNStructContainer & Constructor<ITypedEventEmitter<IDataNodeEvents>> =>
   EventEmitterMixin<IDataNodeEvents, DataNodeNStructContainer>(base)
 
 export const BaseDataNodeConstructor = MixinDataNodeEventEmitter(
