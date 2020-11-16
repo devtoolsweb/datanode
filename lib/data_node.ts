@@ -17,7 +17,6 @@ import {
   NStructContainerMixin
 } from '@aperos/essentials'
 import {
-  Constructor,
   EventEmitterMixin,
   IBaseEvents,
   ITypedEvent,
@@ -26,9 +25,15 @@ import {
   TypedEvent
 } from '@aperos/event-emitter'
 
-export type DataNodeCreator = (name: string, pathParts?: string[]) => IDataNode | null
+export type DataNodeCreator = (
+  name: string,
+  pathParts?: string[]
+) => IDataNode | null
 
-export type DataNodeVisitor = (node: IDataNode | null, pathParts?: string[]) => IDataNode | null
+export type DataNodeVisitor = (
+  node: IDataNode | null,
+  pathParts?: string[]
+) => IDataNode | null
 
 export type DataNodeValue = Date | boolean | null | number | string
 
@@ -88,7 +93,8 @@ export interface IDataNodeEventOpts extends ITypedEventOpts<IDataNodeEvents> {
   childIndex?: number
 }
 
-export class DataNodeEvent extends TypedEvent<IDataNodeEvents> implements IDataNodeEvent {
+export class DataNodeEvent extends TypedEvent<IDataNodeEvents>
+  implements IDataNodeEvent {
   readonly child?: IDataNode
   readonly childIndex?: number
 
@@ -110,7 +116,8 @@ export class DataNodeEvent extends TypedEvent<IDataNodeEvents> implements IDataN
 
 export type DataNodeFlags = 'IsChanging' | 'IsEventTrap' | BaseClassFlags
 
-export type DataNodeNStructChild = Constructor<INStructChild> & Constructor<IBaseClass>
+export type DataNodeNStructChild = Constructor<INStructChild> &
+  Constructor<IBaseClass>
 
 export type DataNodeNStructContainer = DataNodeNStructChild &
   INStructContainerConstructor<INStructContainer<IDataNode>>
@@ -123,11 +130,15 @@ export const MixinDataNodeNStructChild = (
 export const MixinDataNodeNStructContainer = (
   base: Constructor<INStructChild & IBaseClass>
 ): DataNodeNStructContainer =>
-  NStructContainerMixin<IDataNode, Constructor<INStructChild> & Constructor<IBaseClass>>(base)
+  NStructContainerMixin<
+    IDataNode,
+    Constructor<INStructChild> & Constructor<IBaseClass>
+  >(base)
 
 export const MixinDataNodeEventEmitter = (
   base: DataNodeNStructContainer
-): DataNodeNStructContainer & Constructor<ITypedEventEmitter<IDataNodeEvents>> =>
+): DataNodeNStructContainer &
+  Constructor<ITypedEventEmitter<IDataNodeEvents>> =>
   EventEmitterMixin<IDataNodeEvents, DataNodeNStructContainer>(base)
 
 export const BaseDataNodeConstructor = MixinDataNodeEventEmitter(
@@ -197,7 +208,9 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
 
   addSuccessorNode(path: string, node: IDataNode): this {
     if (path.trimLeft().charAt(0) === DataNode.pathSeparator) {
-      throw new Error(`DN0001: Path for successor of data node must be relative: "${path}"`)
+      throw new Error(
+        `DN0001: Path for successor of data node must be relative: "${path}"`
+      )
     }
     this.makePath(path).addChild(node)
     return this
@@ -211,7 +224,9 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
   }
 
   findChildNode(name: string): IDataNode | null {
-    const node = this.findChild((x: INStructChild) => (x as IDataNode).name === name)
+    const node = this.findChild(
+      (x: INStructChild) => (x as IDataNode).name === name
+    )
     return node ? (node as IDataNode) : null
   }
 
@@ -249,7 +264,9 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
   getExistingNode(path: string) {
     const dn = this.getNodeByPath(path)
     if (!dn) {
-      throw new Error(`DN0003: Data node '${this.fullPath}' has no child in the path '${path}'`)
+      throw new Error(
+        `DN0003: Data node '${this.fullPath}' has no child in the path '${path}'`
+      )
     }
     return dn
   }
@@ -333,7 +350,9 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
           const newNode = createNode(name, pathParts)
           if (!newNode) {
             throw new Error(
-              `DN0008: Data node builder returns null: ${pp.join(DataNode.pathSeparator)}`
+              `DN0008: Data node builder returns null: ${pp.join(
+                DataNode.pathSeparator
+              )}`
             )
           }
           return newNode
@@ -346,7 +365,9 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
   }
 
   removeChild(child: IDataNode): this {
-    this.emitEvent(new DataNodeEvent({ child, origin: this, type: 'removeChild' }))
+    this.emitEvent(
+      new DataNodeEvent({ child, origin: this, type: 'removeChild' })
+    )
     return super.removeChild(child)
   }
 
@@ -369,7 +390,9 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
     if (v === true || v === false) {
       this.value = !v
     } else {
-      throw new Error(`DN0023: Node value type of '${this.fullPath} is not boolean`)
+      throw new Error(
+        `DN0023: Node value type of '${this.fullPath} is not boolean`
+      )
     }
     return this
   }
@@ -393,9 +416,13 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
   toString(): string {
     const parts: string[] = []
     ;(function dump(node: IDataNode, indent: number = 0) {
-      const path = `${node.fullPath}${node.isLink ? ` ~ @${node.realPath}` : ''}`
+      const path = `${node.fullPath}${
+        node.isLink ? ` ~ @${node.realPath}` : ''
+      }`
       parts.push(
-        `${' '.repeat(indent)}${path}${node.isLeaf && !node.isLink ? ` = [${node.value}]` : ''}`
+        `${' '.repeat(indent)}${path}${
+          node.isLeaf && !node.isLink ? ` = [${node.value}]` : ''
+        }`
       )
       node.enumChildren(c => dump(c as IDataNode, indent + 2))
     })(this)
@@ -413,7 +440,9 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
    */
   walkPath(path: string, visit: DataNodeVisitor): IDataNode | null {
     if (path.charAt(0) === ' ' || path.charAt(path.length - 1) === ' ') {
-      throw new Error(`DN0009: Path to data node must not be enclosed in spaces: "${path}"`)
+      throw new Error(
+        `DN0009: Path to data node must not be enclosed in spaces: "${path}"`
+      )
     }
     let node: IDataNode | null = this
     if (path.length > 0) {
@@ -423,7 +452,9 @@ export class DataNode extends BaseDataNodeConstructor implements IDataNode {
         const name = p[i]
         if (name === '') {
           if (i > 0) {
-            throw new Error(`DN0010: Data element path cannot end with "/": "${path}"`)
+            throw new Error(
+              `DN0010: Data element path cannot end with "/": "${path}"`
+            )
           }
           fp.length = 0
           node = visit(this.root as IDataNode, fp)
