@@ -4,170 +4,190 @@
  * the keys of which are the names of documents, and the values are
  * trees of nodes.
  */
-import { StringUtils, Memoize } from '@devtoolsweb/ts-goodies'
-import { DataNode, IDataNode } from './data_node'
+import { DataNode, DataNodeValue, IDataNode } from './data_node'
 import { DataNodeLink } from './data_node_link'
+import { Memoize, StringUtils } from '@devtoolsweb/ts-goodies'
 
 export interface IDataNodeBuilderOpts {
-  camelCaseToKebab?: boolean
+    camelCaseToKebab?: boolean
 }
 
 export interface IDataNodeBuilder {
-  build(source: object, rootNodeName?: string): IDataNode
-  getLastIdentifiedPaths(): Record<string, string>
+    build(source: object, rootNodeName?: string): IDataNode
+    getLastIdentifiedPaths(): Record<string, string>
 }
 
 export class DataNodeBuilder implements IDataNodeBuilder {
-  static readonly regexpNodeRef = /^@ref:\s*([^:]+)(?::\/(.*))?$/
 
-  readonly identifiedNodes = new Map<string, IDataNode>()
+    static readonly regexpNodeRef = /^@ref:\s*([^:]+)(?::\/(.*))?$/
 
-  protected readonly camelCaseToKebab: boolean
+    readonly identifiedNodes = new Map<string, IDataNode>()
 
-  constructor(opts?: IDataNodeBuilderOpts) {
-    this.camelCaseToKebab = opts?.camelCaseToKebab || false
-  }
+    protected readonly camelCaseToKebab: boolean
 
-  build(source: object, rootNodeName?: string) {
-    this.identifiedNodes.clear()
-    const root = new DataNode({ name: rootNodeName || 'data' })
-    this.createChildren(root, source)
-    return root
-  }
-
-  getLastIdentifiedPaths() {
-    const xs: Record<string, string> = {}
-    for (const [id, node] of this.identifiedNodes.entries()) {
-      xs[id] = node.fullPath
+    constructor (opts?: IDataNodeBuilderOpts) {
+        this.camelCaseToKebab = opts?.camelCaseToKebab || false
     }
-    return xs
-  }
 
-  private createChildren(dn: IDataNode, nodeObjects: object) {
-    Object.entries(nodeObjects).forEach(([key, value]) => {
-      const name = this.camelCaseToKebab ? StringUtils.camelCaseToKebab(key) : key
-      if (name === 'default' || this.addProperty(dn, name, value)) {
-        return
-      }
-      DataNode.verifyName(name)
-      if (Array.isArray(value)) {
-        const node = this.addChildNode(dn, name)
-        const xs: Record<string, object> = {}
-        value.forEach((v, i) => (xs[`${i}`] = v))
-        this.createChildren(node, xs)
-      } else {
+    build (source: object, rootNodeName?: string) {
+        this.identifiedNodes.clear()
+        const root = new DataNode({ name: rootNodeName || 'data' })
+        this.createChildren(root, source)
+        return root
+    }
+
+    getLastIdentifiedPaths () {
+        const xs: Record<string, string> = {}
+        for (const [ id,
+            node ] of this.identifiedNodes.entries()) {
+            xs[id] = node.fullPath
+        }
+        return xs
+    }
+
+    private addChildNode (dn: IDataNode, name: string, value?: string) {
+        const childNode = new DataNode({
+            name,
+            value
+        })
+        dn.addChild(childNode)
+        return childNode
+    }
+
+    private addProperty (dn: IDataNode, name: string, value: string): boolean {
+        const xs = this.identifiedNodes
+        if (name === '@id') {
+            if (xs.has(value)) {
+                throw new Error(`DN0014: Node already has an id: ${value}`)
+            }
+            if (value.charAt(0) !== '#') {
+                throw new Error(`DN0015: Node id must begin with '#': ${value}`)
+            }
+            xs.set(value, dn)
+            return true
+        }
+        else if (name === '@value') {
+            this.addValue(dn, value)
+            return true
+        }
+        return false
+    }
+
+    private addValue (dn: IDataNode, value: DataNodeValue) {
         const t = typeof value
-        switch (t) {
-          case 'object':
-            this.createChildren(this.addChildNode(dn, name), value)
-            break
+        if (t === 'boolean' || t === 'number' || t === 'string') {
+            dn.value = value
+        }
+        else {
+            throw new Error(`DN0016: Unknown data node value type: ${t}`)
+        }
+    }
 
-          case 'string':
-            dn.addChild(
-              this.createDate(name, value) ||
+    private createChildren (dn: IDataNode, nodeObjects: object) {
+        Object.entries(nodeObjects).forEach(([ key,
+            value ]) => {
+            const name = this.camelCaseToKebab ? StringUtils.camelCaseToKebab(key) : key
+            if (name === 'default' || this.addProperty(dn, name, value)) {
+                return
+            }
+            DataNode.verifyName(name)
+            if (Array.isArray(value)) {
+                const node = this.addChildNode(dn, name)
+                const xs: Record<string, object> = {}
+                value.forEach((v, i) => (xs[`${i}`] = v))
+                this.createChildren(node, xs)
+            }
+            else {
+                const t = typeof value
+                switch (t) {
+                    case 'object':
+                        this.createChildren(this.addChildNode(dn, name), value)
+                        break
+
+                    case 'string':
+                        dn.addChild(this.createDate(name, value) ||
                 this.createLink(dn, name, value) ||
                 this.createRef(name, value) ||
                 this.createTimestamp(name, value) ||
-                new DataNode({ name, value })
-            )
-            break
+                new DataNode({
+                    name,
+                    value
+                }))
+                        break
 
-          default:
-            this.addValue(this.addChildNode(dn, name), value)
+                    default:
+                        this.addValue(this.addChildNode(dn, name), value)
+                }
+            }
+        })
+    }
+
+    private createDate (name: string, value: string): IDataNode | null {
+        const m = value.match(/^@date:\s*(.*)$/)
+        if (m) {
+            const timestamp = new Date(m[1])
+            if (isNaN(timestamp.valueOf())) {
+                throw new Error(`DN0017: Invalid date string: ${m[1]}`)
+            }
+            new DataNode({
+                name,
+                value: new Date(timestamp)
+            })
         }
-      }
-    })
-  }
-
-  private addChildNode(dn: IDataNode, name: string, value?: string) {
-    const childNode = new DataNode({ name, value })
-    dn.addChild(childNode)
-    return childNode
-  }
-
-  private addProperty(dn: IDataNode, name: string, value: string): boolean {
-    const xs = this.identifiedNodes
-    if (name === '@id') {
-      if (xs.has(value)) {
-        throw new Error(`DN0014: Node already has an id: ${value}`)
-      }
-      if (value.charAt(0) !== '#') {
-        throw new Error(`DN0015: Node id must begin with '#': ${value}`)
-      }
-      xs.set(value, dn)
-      return true
-    } else if (name === '@value') {
-      this.addValue(dn, value)
-      return true
+        return null
     }
-    return false
-  }
 
-  private addValue(dn: IDataNode, value: any) {
-    const t = typeof value
-    if (t === 'boolean' || t === 'number' || t === 'string') {
-      dn.value = value
-    } else {
-      throw new Error(`DN0016: Unknown data node value type: ${t}`)
-    }
-  }
-
-  private createDate(name: string, value: string): IDataNode | null {
-    const m = value.match(/^@date:\s*(.*)$/)
-    if (m) {
-      const timestamp = new Date(m[1])
-      if (isNaN(timestamp.valueOf())) {
-        throw new Error(`DN0017: Invalid date string: ${m[1]}`)
-      }
-      new DataNode({ name, value: new Date(timestamp) })
-    }
-    return null
-  }
-
-  private createLink(dn: IDataNode, name: string, value: string): IDataNode | null {
-    const m = value.match(/^@link:\s*(.*)$/)
-    if (m) {
-      const path = m[1]
-      const target = dn.getNodeByPath(path)
-      if (!target) {
-        throw new Error(`DN0018: Target node does not exist: '${path}`)
-      }
-      return new DataNodeLink({ name, target })
-    }
-    return null
-  }
-
-  private createRef(name: string, value: string): IDataNode | null {
-    const m = value.match(DataNodeBuilder.regexpNodeRef)
-    if (m) {
-      const [, id, path] = m
-      let target = this.identifiedNodes.get(id)
-      if (!target) {
-        throw new Error(`DN0019: Node with id '${id}' does not exist`)
-      }
-      if (path) {
-        const c = target.getNodeByPath(path)
-        if (!c) {
-          throw new Error(
-            `DN0020: Child node '${path}' of node '${target.fullPath}' does not exist`
-          )
+    private createLink (dn: IDataNode, name: string, value: string): IDataNode | null {
+        const m = value.match(/^@link:\s*(.*)$/)
+        if (m) {
+            const path = m[1]
+            const target = dn.getNodeByPath(path)
+            if (!target) {
+                throw new Error(`DN0018: Target node does not exist: '${path}`)
+            }
+            return new DataNodeLink({
+                name,
+                target
+            })
         }
-        target = c
-      }
-      return new DataNodeLink({ name, target })
+        return null
     }
-    return null
-  }
 
-  private createTimestamp(name: string, value: string): IDataNode | null {
-    const m = value.match(/^@timestamp:\s*(.*)$/)
-    return m ? new DataNode({ name, value: new Date(parseInt(m[1])) }) : null
-  }
+    private createRef (name: string, value: string): IDataNode | null {
+        const m = value.match(DataNodeBuilder.regexpNodeRef)
+        if (m) {
+            const [ , id,
+                path ] = m
+            let target = this.identifiedNodes.get(id)
+            if (!target) {
+                throw new Error(`DN0019: Node with id '${id}' does not exist`)
+            }
+            if (path) {
+                const c = target.getNodeByPath(path)
+                if (!c) {
+                    throw new Error(`DN0020: Child node '${path}' of node '${target.fullPath}' does not exist`)
+                }
+                target = c
+            }
+            return new DataNodeLink({
+                name,
+                target
+            })
+        }
+        return null
+    }
 
-  @Memoize()
-  static get standard(): IDataNodeBuilder {
-    return new DataNodeBuilder({
-      camelCaseToKebab: true
-    })
-  }
+    private createTimestamp (name: string, value: string): IDataNode | null {
+        const m = value.match(/^@timestamp:\s*(.*)$/)
+        return m ? new DataNode({
+            name,
+            value: new Date(parseInt(m[1]))
+        }) : null
+    }
+
+    @Memoize()
+    static get standard (): IDataNodeBuilder {
+        return new DataNodeBuilder({ camelCaseToKebab: true })
+    }
+
 }

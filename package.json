@@ -9,12 +9,13 @@
   "devDependencies": {
     "@types/jest": "latest",
     "jest": "latest",
-    "rollup": "latest",
     "rollup-plugin-dts": "latest",
     "rollup-plugin-terser": "latest",
     "rollup-plugin-typescript2": "latest",
+    "rollup": "latest",
     "ts-jest": "latest",
     "ts-node": "latest",
+    "type-fest": "latest",
     "typescript": "latest"
   },
   "license": "MIT",
