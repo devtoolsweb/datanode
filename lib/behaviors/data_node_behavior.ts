@@ -1,8 +1,8 @@
 /*
  * TODO: Cleanup event listeners on dispose.
  */
-import { IConstructor } from '@aperos/ts-goodies'
-import { BaseClass, BaseClassFlags, ClassName } from '@aperos/essentials'
+import { IConstructor } from '@devtoolsweb/ts-goodies'
+import { BaseClass, BaseClassFlags, ClassName } from '@devtoolsweb/essentials'
 import { IDataNode } from '../data_node'
 import {
   DataComponentMixin,

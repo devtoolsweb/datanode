@@ -4,7 +4,7 @@
  * the keys of which are the names of documents, and the values are
  * trees of nodes.
  */
-import { StringUtils, Memoize } from '@aperos/ts-goodies'
+import { StringUtils, Memoize } from '@devtoolsweb/ts-goodies'
 import { DataNode, IDataNode } from './data_node'
 import { DataNodeLink } from './data_node_link'
 

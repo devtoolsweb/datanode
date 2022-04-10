@@ -1,5 +1,5 @@
-import { IBaseClassOpts } from '@aperos/essentials'
-import { EventEmitArgs } from '@aperos/event-emitter'
+import { IBaseClassOpts } from '@devtoolsweb/essentials'
+import { EventEmitArgs } from '@devtoolsweb/event-emitter'
 import {
   DataNode,
   DataNodeCreator,

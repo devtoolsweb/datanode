@@ -1,9 +1,9 @@
 {
-  "author": "<aperos.dev@gmail.com>",
+  "author": "<elhombre.dev@gmail.com>",
   "dependencies": {
-    "@aperos/essentials": "*",
-    "@aperos/event-emitter": "*",
-    "@aperos/ts-goodies": "*"
+    "@devtoolsweb/essentials": "*",
+    "@devtoolsweb/event-emitter": "*",
+    "@devtoolsweb/ts-goodies": "*"
   },
   "description": "The data node allows you to build convenient hierarchical structures with tracking of change events",
   "devDependencies": {
@@ -18,7 +18,7 @@
     "typescript": "latest"
   },
   "license": "MIT",
-  "name": "@aperos/datanode",
+  "name": "@devtoolsweb/datanode",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
   "scripts": {

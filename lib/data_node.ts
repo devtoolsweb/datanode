@@ -3,7 +3,7 @@
  * keeping a hierarchical API.
  * TODO: It is necessary to prohibit adding nodes  with matching names.
  */
-import { Constructor, IBitFlags } from '@aperos/ts-goodies'
+import { Constructor, IBitFlags } from '@devtoolsweb/ts-goodies'
 import {
   BaseClass,
   BaseClassFlags,
@@ -15,7 +15,7 @@ import {
   INStructContainerConstructor,
   NStructChildMixin,
   NStructContainerMixin
-} from '@aperos/essentials'
+} from '@devtoolsweb/essentials'
 import {
   EventEmitterMixin,
   IBaseEvents,
@@ -23,7 +23,7 @@ import {
   ITypedEventEmitter,
   ITypedEventOpts,
   TypedEvent
-} from '@aperos/event-emitter'
+} from '@devtoolsweb/event-emitter'
 
 export type DataNodeCreator = (
   name: string,

@@ -3,9 +3,9 @@
  *
  * TODO: Add translated known node names, e.g. { selected: 'marked' } and so on.
  */
-import { IConstructor } from '@aperos/ts-goodies'
-import { IBaseClass, IBaseClassOpts } from '@aperos/essentials'
-import { IBaseEvents, ITypedEventEmitter } from '@aperos/event-emitter'
+import { IConstructor } from '@devtoolsweb/ts-goodies'
+import { IBaseClass, IBaseClassOpts } from '@devtoolsweb/essentials'
+import { IBaseEvents, ITypedEventEmitter } from '@devtoolsweb/event-emitter'
 import { IDataNode, DataNodeValue } from './data_node'
 
 export interface IDataComponent extends IBaseClass {

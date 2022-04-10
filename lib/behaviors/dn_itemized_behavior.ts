@@ -1,5 +1,5 @@
-import { IBitFlags, Memoize } from '@aperos/ts-goodies'
-import { ClassName } from '@aperos/essentials'
+import { IBitFlags, Memoize } from '@devtoolsweb/ts-goodies'
+import { ClassName } from '@devtoolsweb/essentials'
 import { IDataNode, IDataNodeEvent, DataNode } from '../data_node'
 import { DataNodeLink } from '../data_node_link'
 import {
