@@ -1,0 +1,35 @@
+{
+  "model": {
+    "tasks": {
+      "dashboard": {
+        "selection": 1,
+        "text": "Dashboard"
+      },
+      "maps": {
+        "selection": 0,
+        "text": "Maps"
+      },
+      "charts": {
+        "selection": 0,
+        "text": "Charts"
+      }
+    },
+    "tests": {
+      "@id": "#tests",
+      "counter": {
+        "@id": "#test-counter",
+        "@value": 100
+      },
+      "text": "Test button"
+    }
+  },
+  "ui": {
+    "test": {
+      "button": {
+        "counter": "@ref:#test-counter",
+        "text": "@link:/model/tests/text"
+      },
+      "list": "@ref: #tests"
+    }
+  }
+}

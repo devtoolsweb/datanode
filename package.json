@@ -1,0 +1,34 @@
+{
+  "author": "<elhombre.dev@gmail.com>",
+  "dependencies": {
+    "@devtoolsweb/essentials": "*",
+    "@devtoolsweb/event-emitter": "*",
+    "@devtoolsweb/ts-goodies": "*"
+  },
+  "description": "The data node allows you to build convenient hierarchical structures with tracking of change events",
+  "devDependencies": {
+    "@types/jest": "latest",
+    "jest": "latest",
+    "rollup-plugin-dts": "latest",
+    "rollup-plugin-terser": "latest",
+    "rollup-plugin-typescript2": "latest",
+    "rollup": "latest",
+    "ts-jest": "latest",
+    "ts-node": "latest",
+    "type-fest": "latest",
+    "typescript": "latest"
+  },
+  "license": "MIT",
+  "name": "@devtoolsweb/datanode",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "scripts": {
+    "build": "rollup -c",
+    "build-production": "BUILD=production npm run build",
+    "clean": "rm -rf build dist",
+    "prepare": "npm run clean && npm run build-production",
+    "test": "jest"
+  },
+  "types": "dist/index.d.ts",
+  "version": "0.1.1"
+}
